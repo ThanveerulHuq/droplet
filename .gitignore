@@ -1,0 +1,5 @@
+node_modules/
+.output/
+.wxt/
+.chrome/
+.DS_Store

@@ -1,0 +1,23 @@
+{
+  "name": "droplet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "postinstall": "wxt prepare",
+    "test": "node --experimental-strip-types --test scripts/*.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "assert-no-network": "node --experimental-strip-types scripts/assert-no-network.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "wxt": "latest"
+  }
+}
