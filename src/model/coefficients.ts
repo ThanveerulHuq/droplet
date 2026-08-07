@@ -1,0 +1,1 @@
+export const MEDIAN_RESPONSE_TOKENS = 75;
