@@ -48,8 +48,10 @@ export const chatgptAdapter: SiteAdapter = {
 
     let pending = false;
     let snapshot: HTMLElement | null = null;
+    let snapshotMessageId: string | null = null;
     let currentElement: HTMLElement | null = null;
     let currentMessageId: string | null = null;
+    let currentTurnKey: string | null = null;
 
     // Identity (reference) of the last assistant message node — NOT the count, because
     // virtualized lists recycle nodes.
@@ -59,8 +61,13 @@ export const chatgptAdapter: SiteAdapter = {
     };
 
     const arm = (): void => {
-      if (pending) return;
+      // Re-snapshot on EVERY submit — no early return. Virtualized lists recycle nodes: if
+      // the snapshot's element gets recycled onto the new trailing message before it was
+      // observed, the stale snapshot would blind detection forever. Overwriting the snapshot
+      // here makes the state machine self-healing. Repeated arm() calls are idempotent: they
+      // just re-read the current trailing element.
       snapshot = trailingAssistant();
+      snapshotMessageId = snapshot?.getAttribute('data-message-id') ?? null;
       pending = true;
       log.info('submit detected, awaiting new assistant message');
     };
@@ -75,32 +82,40 @@ export const chatgptAdapter: SiteAdapter = {
 
     const onCaptureKeydown = (event: KeyboardEvent): void => {
       if (event.key !== 'Enter' || event.shiftKey) return;
+      // Ignore IME composition confirms and held-down key auto-repeat: both would falsely
+      // arm a submit that never actually fired.
+      if (event.isComposing || event.repeat) return;
       const target = event.target;
       if (!(target instanceof Element)) return;
       if (!composer.some((sel) => target.closest(sel) !== null)) return;
       arm();
     };
 
-    const onBodyMutation = (records: MutationRecord[]): void => {
+    const onBodyMutation = async (records: MutationRecord[]): Promise<void> => {
       if (!pending) return;
       if (!records.some((r) => r.type === 'childList')) return;
       const current = trailingAssistant();
-      if (current === snapshot) return;
-
-      // A new trailing assistant message node appeared. Keep a handler-level reference to
-      // the element + messageId so Task 10 can complete the turn; only the char-count
-      // measurement of textContent happens later. messageId is a synthetic id, not prompt
-      // or response text.
       const messageId = current?.getAttribute('data-message-id') ?? null;
+
+      // Recycling fallback: a virtualized list may recycle the snapshot's node onto the new
+      // trailing message — same reference, new content. Treat that as a new message when the
+      // data-message-id changed. When either id is null, fall back to pure identity comparison.
+      const recycled =
+        current === snapshot &&
+        snapshotMessageId !== null &&
+        messageId !== null &&
+        messageId !== snapshotMessageId;
+      if (current === snapshot && !recycled) return;
+
+      // A new trailing assistant message node appeared. Keep handler-level references to the
+      // element + messageId + its turnKey digest so Task 10 can complete the turn. messageId
+      // is a synthetic id, not prompt or response text. The [id] → textContent-hash fallback
+      // chain for a null messageId is Task 10's job — do NOT read textContent here.
       pending = false;
       currentElement = current;
       currentMessageId = messageId;
+      currentTurnKey = messageId !== null ? await sha256Hex(messageId) : null;
       log.info('assistant message detected', messageId);
-
-      // Warm the turnKey derivation now; completion (Task 10) will hash and emit.
-      void sha256Hex(messageId ?? '').then((digest) => {
-        log.info('assistant message digest', digest);
-      });
     };
 
     const observer = new MutationObserver(onBodyMutation);
@@ -114,8 +129,10 @@ export const chatgptAdapter: SiteAdapter = {
       document.removeEventListener('keydown', onCaptureKeydown, true);
       pending = false;
       snapshot = null;
+      snapshotMessageId = null;
       currentElement = null;
       currentMessageId = null;
+      currentTurnKey = null;
     };
   },
 };

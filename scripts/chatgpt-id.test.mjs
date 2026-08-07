@@ -35,3 +35,19 @@ test('getConversationId: null for /, /share/, empty trailing segment, and other 
   assert.equal(chatgptAdapter.getConversationId(new URL('https://chatgpt.com/c/')), null);
   assert.equal(chatgptAdapter.getConversationId(new URL('https://example.com/c/abc')), null);
 });
+
+// Edge: matches and getConversationId are independently defined; these lock the actual
+// behavior of the current regexes so the matches↔id contract is documented.
+
+test('edge: matches true for /c/<id>/<extra> but id extraction returns null', () => {
+  // matches() accepts any /c/ prefix, but the id regex `/\/c\/([^/]+)$/` requires the id to
+  // be a single trailing slash-free segment, so 'abc/xyz' has no capture → null.
+  assert.equal(chatgptAdapter.matches(new URL('https://chatgpt.com/c/abc/xyz')), true);
+  assert.equal(chatgptAdapter.getConversationId(new URL('https://chatgpt.com/c/abc/xyz')), null);
+});
+
+test('edge: /C/ABC is not matched (case-sensitive) but id extraction is case-insensitive', () => {
+  // matches() uses the case-sensitive literal /^\/c\//, while the id regex has the /i flag.
+  assert.equal(chatgptAdapter.matches(new URL('https://chatgpt.com/C/ABC')), false);
+  assert.equal(chatgptAdapter.getConversationId(new URL('https://chatgpt.com/C/ABC')), 'ABC');
+});
