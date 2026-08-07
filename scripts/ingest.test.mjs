@@ -39,6 +39,18 @@ test('updates the conversation bucket and lastSeen', () => {
   assert.equal(store.chats['abc'].counters.turns, 1);
   assert.equal(store.chats['abc'].lastSeen, 5000);
 });
+test('creates a fresh chat entry on first turn', () => {
+  const store = emptyStore();
+  const now = 5000;
+  const r = applyTurn(store, sample({ turnKey: 'k-fresh', chatKey: 'fresh' }), now);
+  assert.equal(r.accepted, true);
+  assert.deepEqual(store.chats['fresh'], {
+    provider: 'chatgpt',
+    firstSeen: now,
+    lastSeen: now,
+    counters: { turns: 1, tokensOut: 300, reasoningTurns: 0, estimatedTurns: 0 },
+  });
+});
 test('seen ring is capped at SEEN_CAP', () => {
   const store = emptyStore();
   for (let i = 0; i < 501; i++) applyTurn(store, sample({ turnKey: `k${i}`, chatKey: 'x' }), 1000 + i);

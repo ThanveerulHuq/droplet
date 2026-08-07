@@ -1,5 +1,5 @@
 import type { Counters, ProviderId, Store } from './schema.ts';
-import { SEEN_CAP, emptyCounters } from './schema.ts';
+import { SEEN_CAP, addCounters, emptyCounters } from './schema.ts';
 import { MEDIAN_RESPONSE_TOKENS } from '../model/coefficients.ts';
 
 export interface TurnSample {
@@ -46,6 +46,5 @@ export function applyTurn(store: Store, sample: TurnSample, now = Date.now()): I
 }
 
 function addTo(base: Counters | undefined, c: Counters): Counters {
-  const b = base ?? emptyCounters();
-  return { turns: b.turns + c.turns, tokensOut: b.tokensOut + c.tokensOut, reasoningTurns: b.reasoningTurns + c.reasoningTurns, estimatedTurns: b.estimatedTurns + c.estimatedTurns };
+  return addCounters(base ?? emptyCounters(), c);
 }
