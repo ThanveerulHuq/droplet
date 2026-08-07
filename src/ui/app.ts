@@ -1,6 +1,8 @@
 import { repo } from '../storage/repo.ts';
 import { log } from '../lib/log.ts';
 
+let bound = false;
+
 export function renderApp(): void {
   const buildInfo = document.getElementById('buildInfo');
   const status = document.getElementById('status');
@@ -12,6 +14,9 @@ export function renderApp(): void {
   }
 
   buildInfo.textContent = browser.runtime.getManifest().version_name ?? '';
+
+  if (bound) return;
+  bound = true;
 
   storageCheckBtn.addEventListener('click', async () => {
     storageCheckBtn.disabled = true;
