@@ -30,6 +30,9 @@ const targetBrowser = (() => {
 })();
 
 export default defineConfig({
+  vite: () => ({
+    build: { modulePreload: { polyfill: false } },
+  }),
   zip: {
     name: targetBrowser === 'chrome' ? 'droplet-extension' : `droplet-extension-${targetBrowser}`,
     artifactTemplate: '{{name}}.zip',

@@ -8,12 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
       wxt:
         specifier: latest
-        version: 0.21.3(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(jiti@2.7.0))
+        version: 0.21.3(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.43)(jiti@2.7.0))
 
 packages:
 
@@ -171,6 +174,9 @@ packages:
 
   '@types/har-format@1.2.16':
     resolution: {integrity: sha512-fluxdy7ryD3MV6h8pTfTYpy/xQzCFC7m89nOH9y94cNqJ1mDIDPut7MnRHI3F6qRmh/cT2fUjG1MLdCNb4hE9A==}
+
+  '@types/node@20.19.43':
+    resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
 
   '@webext-core/fake-browser@2.0.1':
     resolution: {integrity: sha512-4x5z1z8F0KU8ShF4ForXJ8qnA8oZTy7HYjI91Mbpdzp3H3hU9HR6TNPUxfWtSpFz2FwgEircuJKQg0qFIn6RLg==}
@@ -648,6 +654,9 @@ packages:
   uhyphen@0.2.0:
     resolution: {integrity: sha512-qz3o9CHXmJJPGBdqzab7qAYuW8kQGKNEuoHFYrBwV6hWIMcpAmxDLXojcHfFr9US1Pe6zUswEIJIbLI610fuqA==}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   unimport@6.4.0:
     resolution: {integrity: sha512-JJOOuNMFq8b4ZPBKwQUxEcba4MplskDzYI1Lvrf8rJfWphZTWvPNXWa493qsPngHUmub89w6C7j+SeLWTE/UIQ==}
     engines: {node: '>=18.12.0'}
@@ -881,6 +890,10 @@ snapshots:
   '@types/filewriter@0.0.33': {}
 
   '@types/har-format@1.2.16': {}
+
+  '@types/node@20.19.43':
+    dependencies:
+      undici-types: 6.21.0
 
   '@webext-core/fake-browser@2.0.1':
     dependencies:
@@ -1304,7 +1317,9 @@ snapshots:
 
   uhyphen@0.2.0: {}
 
-  unimport@6.4.0(rolldown@1.2.3)(vite@8.2.1(jiti@2.7.0)):
+  undici-types@6.21.0: {}
+
+  unimport@6.4.0(rolldown@1.2.3)(vite@8.2.1(@types/node@20.19.43)(jiti@2.7.0)):
     dependencies:
       acorn: 8.18.0
       escape-string-regexp: 5.0.0
@@ -1318,7 +1333,7 @@ snapshots:
       scule: 1.3.0
       strip-literal: 4.0.0
       tinyglobby: 0.2.17
-      unplugin: 3.3.0(rolldown@1.2.3)(vite@8.2.1(jiti@2.7.0))
+      unplugin: 3.3.0(rolldown@1.2.3)(vite@8.2.1(@types/node@20.19.43)(jiti@2.7.0))
       unplugin-utils: 0.3.2
     optionalDependencies:
       rolldown: 1.2.3
@@ -1337,16 +1352,16 @@ snapshots:
       pathe: 2.0.3
       picomatch: 4.0.5
 
-  unplugin@3.3.0(rolldown@1.2.3)(vite@8.2.1(jiti@2.7.0)):
+  unplugin@3.3.0(rolldown@1.2.3)(vite@8.2.1(@types/node@20.19.43)(jiti@2.7.0)):
     dependencies:
       '@jridgewell/remapping': 2.3.5
       picomatch: 4.0.5
       webpack-virtual-modules: 0.6.2
     optionalDependencies:
       rolldown: 1.2.3
-      vite: 8.2.1(jiti@2.7.0)
+      vite: 8.2.1(@types/node@20.19.43)(jiti@2.7.0)
 
-  vite@8.2.1(jiti@2.7.0):
+  vite@8.2.1(@types/node@20.19.43)(jiti@2.7.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
@@ -1354,6 +1369,7 @@ snapshots:
       rolldown: 1.2.3
       tinyglobby: 0.2.17
     optionalDependencies:
+      '@types/node': 20.19.43
       fsevents: 2.3.3
       jiti: 2.7.0
 
@@ -1365,7 +1381,7 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
 
-  wxt@0.21.3(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(jiti@2.7.0)):
+  wxt@0.21.3(rolldown@1.2.3)(typescript@5.9.3)(vite@8.2.1(@types/node@20.19.43)(jiti@2.7.0)):
     dependencies:
       '@1natsu/wait-element': 4.2.0
       '@aklinker1/rollup-plugin-visualizer': 5.12.0
@@ -1401,8 +1417,8 @@ snapshots:
       superlock: 1.3.5
       tiny-open: 1.3.0
       tinyglobby: 0.2.17
-      unimport: 6.4.0(rolldown@1.2.3)(vite@8.2.1(jiti@2.7.0))
-      vite: 8.2.1(jiti@2.7.0)
+      unimport: 6.4.0(rolldown@1.2.3)(vite@8.2.1(@types/node@20.19.43)(jiti@2.7.0))
+      vite: 8.2.1(@types/node@20.19.43)(jiti@2.7.0)
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
