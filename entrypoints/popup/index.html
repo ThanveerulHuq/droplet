@@ -3,9 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <title>Droplet</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
   </head>
   <body>
-    <!-- Task 6 fully implements the popup. -->
+    <div id="app">
+      <header>
+        <h1>Droplet</h1>
+      </header>
+      <main>
+        <p id="status"></p>
+        <button id="storageCheckBtn" type="button">Check storage</button>
+      </main>
+      <footer id="buildInfo"></footer>
+    </div>
+    <script type="module" src="./main.ts"></script>
   </body>
-  <script type="module" src="./main.ts"></script>
 </html>
