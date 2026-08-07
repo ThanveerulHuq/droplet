@@ -36,18 +36,15 @@ test('getConversationId: null for /, /share/, empty trailing segment, and other 
   assert.equal(chatgptAdapter.getConversationId(new URL('https://example.com/c/abc')), null);
 });
 
-// Edge: matches and getConversationId are independently defined; these lock the actual
-// behavior of the current regexes so the matches↔id contract is documented.
+// Contract: matches and getConversationId share one strict shape (single trailing segment
+// after /c/, case-sensitive), so they never disagree. These lock that alignment.
 
-test('edge: matches true for /c/<id>/<extra> but id extraction returns null', () => {
-  // matches() accepts any /c/ prefix, but the id regex `/\/c\/([^/]+)$/` requires the id to
-  // be a single trailing slash-free segment, so 'abc/xyz' has no capture → null.
-  assert.equal(chatgptAdapter.matches(new URL('https://chatgpt.com/c/abc/xyz')), true);
+test('edge: matches and getConversationId agree for /c/<id>/<extra> (no match, null)', () => {
+  assert.equal(chatgptAdapter.matches(new URL('https://chatgpt.com/c/abc/xyz')), false);
   assert.equal(chatgptAdapter.getConversationId(new URL('https://chatgpt.com/c/abc/xyz')), null);
 });
 
-test('edge: /C/ABC is not matched (case-sensitive) but id extraction is case-insensitive', () => {
-  // matches() uses the case-sensitive literal /^\/c\//, while the id regex has the /i flag.
+test('edge: /C/ABC is neither matched nor extracted (case-sensitive)', () => {
   assert.equal(chatgptAdapter.matches(new URL('https://chatgpt.com/C/ABC')), false);
-  assert.equal(chatgptAdapter.getConversationId(new URL('https://chatgpt.com/C/ABC')), 'ABC');
+  assert.equal(chatgptAdapter.getConversationId(new URL('https://chatgpt.com/C/ABC')), null);
 });

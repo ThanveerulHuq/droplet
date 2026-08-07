@@ -23,17 +23,19 @@ export const chatgptAdapter: SiteAdapter = {
   id: 'chatgpt',
   adapterVersion: '0.1.0',
 
+  // matches and getConversationId share one strict shape: exactly one trailing segment
+  // after /c/ (case-sensitive), so they can never disagree on a URL.
   matches(url: URL): boolean {
     return (
       url.hostname === 'chatgpt.com' &&
-      (/^\/g\/[^/]+\/c\//.test(url.pathname) || /^\/c\//.test(url.pathname))
+      (/^\/g\/[^/]+\/c\/[^/]+$/.test(url.pathname) || /^\/c\/[^/]+$/.test(url.pathname))
     );
   },
 
   getConversationId(url: URL): string | null {
     if (url.hostname !== 'chatgpt.com') return null;
     // Trailing segment after the final /c/ in both /c/<uuid> and /g/<slug>/c/<uuid>.
-    const m = url.pathname.match(/\/c\/([^/]+)$/i);
+    const m = url.pathname.match(/\/c\/([^/]+)$/);
     return m ? (m[1] ?? null) : null;
   },
 
