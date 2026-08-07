@@ -9,6 +9,9 @@ let queue: Promise<void> = Promise.resolve();
 export default defineBackground(() => {
   log.info('build', browser.runtime.getManifest().version_name);
   browser.runtime.onMessage.addListener((message: IncomingMessage, _sender, sendResponse) => {
+    // If the sender's channel is closed (popup/tab gone), sendResponse throws; never let that
+    // reject the serialized queue or wedge every subsequent message.
+    const respond = (value: unknown) => { try { sendResponse(value); } catch { /* channel closed */ } };
     if (message.type === 'TURN_SAMPLE' && 'sample' in message) {
       // Serialized across tabs: two concurrent reads of the same store must never both
       // increment from the same snapshot (R9.7). Mirrors the reference's enqueueAdSelection.
@@ -19,8 +22,8 @@ export default defineBackground(() => {
           if (accepted) await repo.save(next);
           return accepted;
         })
-        .then((accepted) => sendResponse({ accepted }))
-        .catch((err) => { log.warn('TURN_SAMPLE failed', err); sendResponse({ accepted: false }); });
+        .then((accepted) => respond({ accepted }))
+        .catch((err) => { log.warn('TURN_SAMPLE failed', err); respond({ accepted: false }); });
       return true;
     }
   });

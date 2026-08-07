@@ -14,3 +14,10 @@ test('migrate on a store at SCHEMA_VERSION is identity (same reference)', () => 
   store.meta.schemaVersion = SCHEMA_VERSION;
   assert.equal(migrate(store), store);
 });
+
+test('migrate on a store with schemaVersion 0 returns without hanging and unchanged', () => {
+  const store = emptyStore();
+  store.meta.schemaVersion = 0;
+  const out = migrate(store);
+  assert.equal(out.meta.schemaVersion, 0); // no migration defined for v0 — unchanged
+});

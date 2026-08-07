@@ -4,7 +4,9 @@ import { SCHEMA_VERSION } from './schema.ts';
 export function migrate(store: Store): Store {
   let s = store;
   while (s.meta.schemaVersion < SCHEMA_VERSION) {
-    s = migrations[s.meta.schemaVersion]?.(s) ?? s;
+    const next = migrations[s.meta.schemaVersion];
+    if (!next) break; // no migration defined for this version — never loop forever
+    s = next(s);
   }
   return s;
 }
