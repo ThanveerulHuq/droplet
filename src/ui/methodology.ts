@@ -108,6 +108,8 @@ function coefficientRows(): HTMLElement {
 /**
  * Static, full-height methodology view (PRD §5.2): formula, coefficient table with sources,
  * on-site vs grid water explanation, named limitations, model version + changelog + repo links.
+ * When `onBack` is provided a "← Back" button is rendered that invokes it; otherwise the footer
+ * omits the button (callers that never leave the panel pass no callback).
  * Direct DOM only (matches scopes.ts convention); no innerHTML.
  */
 export function renderMethodology(container: HTMLElement, onBack?: () => void): void {
@@ -140,19 +142,22 @@ export function renderMethodology(container: HTMLElement, onBack?: () => void): 
     limitations.appendChild(li);
   }
 
-  const back = document.createElement('button');
-  back.className = 'methodology-back';
-  back.type = 'button';
-  back.textContent = '← Back';
-  back.addEventListener('click', () => onBack?.());
   const footer = el('div', 'methodology-footer');
-  footer.append(
-    back,
+  const footerNodes: Array<Node | string> = [
     paragraph(`model v${COEFFICIENTS.modelVersion}`),
     link(CHANGELOG_URL, 'Model changelog'),
     link(METHODOLOGY_URL, 'METHODOLOGY.md'),
     link(REPO_URL, 'Source code'),
-  );
+  ];
+  if (onBack) {
+    const back = document.createElement('button');
+    back.className = 'methodology-back';
+    back.type = 'button';
+    back.textContent = '← Back';
+    back.addEventListener('click', () => onBack());
+    footerNodes.unshift(back);
+  }
+  footer.append(...footerNodes);
 
   container.append(
     heading('How the estimate is calculated'),

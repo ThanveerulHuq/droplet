@@ -1,13 +1,8 @@
 import { log } from '../lib/log.ts';
 import { mountScopes } from './scopes.ts';
 import { renderMethodology } from './methodology.ts';
-import { mountSettings } from './settings.ts';
 import { repo } from '../storage/repo.ts';
 import { seedDemoStore } from '../storage/seed.ts';
-
-type View = 'scopes' | 'methodology' | 'settings';
-
-const VIEW_SECTIONS: ReadonlyArray<View> = ['scopes', 'methodology', 'settings'];
 
 let bound = false;
 
@@ -15,8 +10,9 @@ export function renderApp(): void {
   const buildInfo = document.getElementById('buildInfo');
   const scopes = document.getElementById('scopes');
   const methodology = document.getElementById('methodology');
+  const methodologyBtn = document.getElementById('methodologyBtn');
+  const trackingBtn = document.getElementById('trackingBtn');
   const seedBtn = document.getElementById('seedDemoBtn');
-  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.view-tab'));
 
   if (!buildInfo || !(scopes instanceof HTMLElement) || !(methodology instanceof HTMLElement)) {
     log.warn('popup shell missing required elements');
@@ -29,39 +25,42 @@ export function renderApp(): void {
   bound = true;
 
   const scopesApi = mountScopes(scopes);
-  renderMethodology(methodology);
-  let settingsMounted = false;
+  renderMethodology(methodology, () => show('scopes'));
 
-  // Settings re-render fresh from storage each time the tab is opened (R6.1: a settings change
-  // re-renders scopes immediately via onChanged → scopesApi.refresh).
-  const mountSettingsView = (): void => {
-    const settings = document.getElementById('settings');
-    if (!(settings instanceof HTMLElement) || settingsMounted) return;
-    settingsMounted = true;
-    mountSettings(settings, () => void scopesApi.refresh());
+  // Two-state view: scopes (default) or the methodology panel (footer "How this works").
+  const show = (view: 'scopes' | 'methodology'): void => {
+    scopes.hidden = view !== 'scopes';
+    methodology.hidden = view !== 'methodology';
   };
 
-  // Static methodology panel renders once at mount; settings re-renders on save (Task 25).
-  const show = (view: View): void => {
-    for (const section of VIEW_SECTIONS) {
-      const node = document.getElementById(section);
-      if (node) node.hidden = section !== view;
+  methodologyBtn?.addEventListener('click', () => show('methodology'));
+
+  // Footer tracking pause (Task 26 gate): flip store.settings.tracking, re-render scopes so the
+  // existing paused banner reflects the state. Button label mirrors the current state.
+  const syncTracking = async (): Promise<void> => {
+    if (!(trackingBtn instanceof HTMLButtonElement)) return;
+    try {
+      const settings = await repo.getSettings();
+      trackingBtn.textContent = settings.tracking ? 'Pause tracking' : 'Resume tracking';
+    } catch (err) {
+      log.warn('failed to read tracking state', err);
     }
-    for (const tab of tabs) {
-      tab.setAttribute('aria-selected', String(tab.dataset.view === view));
-      tab.classList.toggle('active', tab.dataset.view === view);
-    }
-    if (view === 'settings') mountSettingsView();
   };
-  for (const tab of tabs) {
-    const view = tab.dataset.view as View | undefined;
-    if (!view || !VIEW_SECTIONS.includes(view)) continue;
-    tab.addEventListener('click', () => show(view));
-  }
-  show('scopes');
+  trackingBtn?.addEventListener('click', async () => {
+    if (!(trackingBtn instanceof HTMLButtonElement)) return;
+    trackingBtn.disabled = true;
+    try {
+      const settings = await repo.getSettings();
+      await repo.saveSettings({ ...settings, tracking: !settings.tracking });
+      await Promise.all([scopesApi.refresh(), syncTracking()]);
+    } catch (err) {
+      log.warn('failed to toggle tracking', err);
+    } finally {
+      trackingBtn.disabled = false;
+    }
+  });
 
   // QA affordance (plan M2 exit): seed a demo store so all four scopes render figures.
-  // The active chat key is resolved so "This chat" also shows data.
   const seed = seedBtn instanceof HTMLButtonElement ? seedBtn : null;
   seed?.addEventListener('click', async () => {
     seed.disabled = true;
@@ -85,4 +84,7 @@ export function renderApp(): void {
       seed.disabled = false;
     }
   });
+
+  void syncTracking();
+  show('scopes');
 }
