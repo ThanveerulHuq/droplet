@@ -102,6 +102,7 @@ export default defineContentScript({
     // object return is dropped by Chrome/Firefox/polyfill runtimes, so the promise is required.
     browser.runtime.onMessage.addListener((msg: { type?: string }) => {
       if (msg.type === 'GET_CONVERSATION_KEY') return Promise.resolve({ chatKey: currentChatKey });
+      if (msg.type === 'SCAN_CONVERSATION') return Promise.resolve({ scan: adapter.scanConversation?.() ?? null });
     });
   },
 });
