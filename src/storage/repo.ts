@@ -1,4 +1,4 @@
-import { emptyStore, type Store } from './schema.ts';
+import { emptyStore, type Settings, type Store } from './schema.ts';
 import { migrate } from './migrations.ts';
 import { log } from '../lib/log.ts';
 
@@ -30,4 +30,10 @@ export const repo = {
     return migrate(raw);
   },
   async save(store: Store): Promise<void> { await browser.storage.local.set({ [KEY]: store }); },
+  async getSettings(): Promise<Settings> { return (await this.load()).settings; },
+  async saveSettings(settings: Settings): Promise<void> {
+    const store = await this.load();
+    store.settings = settings;
+    await this.save(store);
+  },
 };

@@ -1,6 +1,7 @@
 import { log } from '../lib/log.ts';
 import { mountScopes } from './scopes.ts';
 import { renderMethodology } from './methodology.ts';
+import { mountSettings } from './settings.ts';
 import { repo } from '../storage/repo.ts';
 import { seedDemoStore } from '../storage/seed.ts';
 
@@ -29,6 +30,16 @@ export function renderApp(): void {
 
   const scopesApi = mountScopes(scopes);
   renderMethodology(methodology);
+  let settingsMounted = false;
+
+  // Settings re-render fresh from storage each time the tab is opened (R6.1: a settings change
+  // re-renders scopes immediately via onChanged → scopesApi.refresh).
+  const mountSettingsView = (): void => {
+    const settings = document.getElementById('settings');
+    if (!(settings instanceof HTMLElement) || settingsMounted) return;
+    settingsMounted = true;
+    mountSettings(settings, () => void scopesApi.refresh());
+  };
 
   // Static methodology panel renders once at mount; settings re-renders on save (Task 25).
   const show = (view: View): void => {
@@ -40,6 +51,7 @@ export function renderApp(): void {
       tab.setAttribute('aria-selected', String(tab.dataset.view === view));
       tab.classList.toggle('active', tab.dataset.view === view);
     }
+    if (view === 'settings') mountSettingsView();
   };
   for (const tab of tabs) {
     const view = tab.dataset.view as View | undefined;
