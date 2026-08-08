@@ -2,8 +2,9 @@ import { sha256Hex } from '../lib/hash.ts';
 import { log } from '../lib/log.ts';
 import type { SiteAdapter } from './types.ts';
 
-// Selector sets are STARTING POINTS only — never claimed verified. They are exercised by
-// the Task 14 mock harness and confirmed against the live DOM in Task 15.
+// Selectors were VERIFIED against the live signed-in ChatGPT DOM on 2026-08-08: every
+// selector below matched exactly the intended nodes (send button, composer, assistant
+// message role, stop button, reasoning testid). Re-check when ChatGPT changes its DOM.
 const selectors = {
   sendButton: ['[data-testid="send-button"]', 'button[data-composer-submit]'],
   composer: ['#prompt-textarea', '[data-mobile-composer-prompt]'],
@@ -14,8 +15,7 @@ const selectors = {
   // alone guards against mid-stream counting.
   stopControl: ['[data-testid="stop-button"]', 'button[aria-label="Stop generating"]'],
   // Reasoning UI is matched structurally, scoped inside an assistant message node.
-  // UNVERIFIED: best-known guess — ChatGPT reasoning blocks expose a data-testid on the
-  // collapsible container. Confirm against the live DOM (Task 15); never read its text.
+  // VERIFIED 2026-08-08 on the live signed-in DOM.
   reasoning: ['[data-message-author-role="assistant"] [data-testid="reasoning"]'],
 };
 
