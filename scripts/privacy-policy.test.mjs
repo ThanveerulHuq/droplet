@@ -18,4 +18,13 @@ test('privacy policy discloses all required Chrome Web Store data practices', ()
     assert.ok(policy.toLocaleLowerCase().includes(phrase.toLocaleLowerCase()), `Missing: ${phrase}`);
   }
 
+  assert.doesNotMatch(policy, /REPLACE-WITH-YOUR-EMAIL@example\.com/);
+});
+
+test('privacy policy links to the colocated methodology page', () => {
+  const policy = readFileSync(new URL('../privacy-policy/index.html', import.meta.url), 'utf8');
+  const methodology = readFileSync(new URL('../privacy-policy/methodology.html', import.meta.url), 'utf8');
+
+  assert.match(policy, /href="methodology\.html"/);
+  assert.match(methodology, /How the estimate is calculated/);
 });

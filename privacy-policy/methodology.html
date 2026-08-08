@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="How Droplet estimates water associated with AI chat usage.">
+    <title>Droplet Methodology</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #17342d;
+        background: #f4faf7;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; line-height: 1.65; }
+      main { width: min(100% - 2rem, 52rem); margin: 0 auto; padding: 3.5rem 0 5rem; }
+      h1, h2 { line-height: 1.2; color: #102820; }
+      h1 { margin: 0; font-size: clamp(2rem, 6vw, 3rem); }
+      h2 { margin: 2.5rem 0 0.65rem; font-size: 1.35rem; }
+      p, li { max-width: 46rem; }
+      .updated { color: #526962; }
+      a { color: #075d47; }
+      pre { overflow-x: auto; padding: 1rem; border-radius: 0.5rem; background: #e6f1eb; }
+      table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.93rem; }
+      th, td { padding: 0.65rem; border-bottom: 1px solid #c9d8d0; text-align: left; }
+      th { color: #102820; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p><a href="index.html">← Privacy policy</a></p>
+        <h1>Droplet methodology</h1>
+        <p class="updated">Model version 0.1.0 · Last updated: August 8, 2026</p>
+      </header>
+
+      <section>
+        <h2>How the estimate is calculated</h2>
+        <p>
+          Droplet estimates output tokens from the character length of each completed
+          assistant response. It then estimates the energy for that response and converts
+          the energy estimate into on-site and electricity-generation water estimates.
+        </p>
+        <pre>tokens_out    = char_count / 4
+E_Wh          = (Wh_base + tokens_out × Wh_per_token) × reasoning_multiplier
+water_onsite  = E_Wh × WUE_dc
+water_grid    = E_Wh × EWIF_grid
+water_total   = water_onsite + water_grid</pre>
+      </section>
+
+      <section>
+        <h2>On-site and grid water</h2>
+        <p>
+          On-site water is used directly for data-center cooling. Grid water is used upstream
+          to generate the electricity that powers a request. “On-site cooling only” shows the
+          direct estimate; “including electricity generation” combines both values.
+        </p>
+      </section>
+
+      <section>
+        <h2>Coefficients</h2>
+        <table>
+          <thead>
+            <tr><th scope="col">Coefficient</th><th scope="col">Low</th><th scope="col">Mid</th><th scope="col">High</th><th scope="col">Unit</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Wh_base</th><td>0.02</td><td>0.05</td><td>0.30</td><td>Wh / request</td></tr>
+            <tr><th scope="row">Wh_per_token</th><td>0.0002</td><td>0.00063</td><td>0.009</td><td>Wh / token</td></tr>
+            <tr><th scope="row">reasoning_multiplier</th><td>1.5</td><td>3</td><td>10</td><td>×</td></tr>
+            <tr><th scope="row">WUE_dc</th><td>0.2</td><td>1.1</td><td>1.9</td><td>mL / Wh</td></tr>
+            <tr><th scope="row">EWIF_grid</th><td>1.0</td><td>4.5</td><td>6.5</td><td>mL / Wh</td></tr>
+          </tbody>
+        </table>
+        <p>
+          The low, mid, and high ranges reflect uncertainty across hardware efficiency,
+          response length, data-center water use, and electricity-generation water use.
+        </p>
+      </section>
+
+      <section>
+        <h2>Known limitations</h2>
+        <ul>
+          <li>Reasoning tokens are not visible, so Droplet applies a multiplier only when reasoning UI is detected.</li>
+          <li>Droplet does not know the data-center region that served a request; water and grid intensity vary by region.</li>
+          <li>Token count is approximated from characters, so it is an estimate rather than a measured token total.</li>
+          <li>Water embodied in chip manufacturing and data-center construction is not included.</li>
+          <li>Input-token processing is included in the base estimate rather than separately measured.</li>
+          <li>Host-side retrieval, image generation, and tool calls are not included.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>
