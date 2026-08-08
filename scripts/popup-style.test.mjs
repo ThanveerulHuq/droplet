@@ -25,3 +25,11 @@ test('popup stylesheet does not use the retired green switch color', () => {
 test('popup stylesheet does not reserve space for the removed model version', () => {
   assert.doesNotMatch(css, /\.model-version/);
 });
+
+test('popup footer is a subdued panel-bottom affordance', () => {
+  assert.match(css, /#app\s*\{[\s\S]*?display: flex;[\s\S]*?flex-direction: column;/);
+  assert.match(css, /#app > footer\s*\{[\s\S]*?margin-top: auto;/);
+  assert.match(css, /#methodologyLink\s*\{[\s\S]*?font-size: 10px;/);
+  assert.match(css, /#app > footer\s*\{[\s\S]*?justify-content: flex-end;/);
+  assert.match(css, /\.meta\s*\{[\s\S]*?text-align: right;/);
+});

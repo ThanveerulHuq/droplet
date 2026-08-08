@@ -13,6 +13,15 @@ test('scope render omits the repeated secondary comparison and model version', (
   assert.doesNotMatch(source, /model-version|COEFFICIENTS/);
 });
 
+test('scope render puts response metadata after the estimate details', () => {
+  assert.match(source, /reading\.append\(headline, subtitle\);/);
+  assert.match(source, /reading\.append\(headline, subtitle\);[\s\S]*?reading\.appendChild\(meta\);/);
+});
+
+test('scope render omits the estimated-response footnote', () => {
+  assert.doesNotMatch(source, /responses were estimated|estimatedRatio/);
+});
+
 test('scope controls retain pressed-state semantics', () => {
   assert.match(source, /btn\.setAttribute\('aria-pressed', String\(id === active\)\)/);
 });

@@ -131,14 +131,9 @@ function appendView(body: HTMLElement, view: ScopeView, state: ScopesState): voi
     meta.textContent = providers;
   }
 
-  reading.append(headline, subtitle, meta);
+  reading.append(headline, subtitle);
 
-  if (view.estimatedRatio > 0.1) {
-    const estimated = el('p', 'estimated');
-    estimated.textContent = '>10% of responses were estimated';
-    reading.appendChild(estimated);
-  }
-
+  reading.appendChild(meta);
 }
 
 /**
