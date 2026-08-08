@@ -7,6 +7,12 @@ export interface TurnSample {
   provider: ProviderId;
 }
 
+export interface ConversationScan {
+  turnCount: number;
+  totalChars: number;
+  reasoningCount: number;
+}
+
 export interface SelectorSet {
   sendButton: string[];
   composer: string[];

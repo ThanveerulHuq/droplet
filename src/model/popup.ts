@@ -1,4 +1,5 @@
 import type { Counters, ProviderId, Settings, Store } from '../storage/schema.ts';
+import type { ConversationScan } from '../adapters/types.ts';
 import type { Scope } from './aggregate.ts';
 import { estimatedRatio, scopeCounters } from './aggregate.ts';
 import type { Band } from './estimate.ts';
@@ -80,6 +81,31 @@ export function buildScopeView(store: Store, settings: Settings, scope: Scope, c
     secondary,
     provider: scopeProviders(store, scope, chatKey, now),
     estimatedRatio: counters ? estimatedRatio(counters) : 0,
+    volumeLabel: formatVolume(band.mid, settings.units),
+  };
+}
+
+/** Ephemeral chat-scope view built from a live DOM scan (no store writes). Returns null for an empty scan. */
+export function buildScanView(scan: ConversationScan, settings: Settings): ScopeView | null {
+  if (scan.turnCount === 0) return null;
+
+  const counters: Counters = {
+    turns: scan.turnCount,
+    tokensOut: Math.round(scan.totalChars / 4),
+    reasoningTurns: scan.reasoningCount,
+    estimatedTurns: 0,
+  };
+  const band = estimateBand(counters, buildScenarios(COEFFICIENTS, settings));
+  const primary = { ...pickComparison(band.mid, settings.comparisonSet), label: formatComparison(band.mid, settings.comparisonSet) };
+  const secondary = settings.comparisonSet === 'food' ? null : { ...pickComparison(band.mid, 'food'), label: formatComparison(band.mid, 'food') };
+
+  return {
+    counters,
+    band,
+    primary,
+    secondary,
+    provider: ['chatgpt'],
+    estimatedRatio: estimatedRatio(counters),
     volumeLabel: formatVolume(band.mid, settings.units),
   };
 }
