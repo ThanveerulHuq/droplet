@@ -110,7 +110,7 @@ function coefficientRows(): HTMLElement {
  * on-site vs grid water explanation, named limitations, model version + changelog + repo links.
  * Direct DOM only (matches scopes.ts convention); no innerHTML.
  */
-export function renderMethodology(container: HTMLElement): void {
+export function renderMethodology(container: HTMLElement, onBack?: () => void): void {
   container.replaceChildren();
 
   const formula = el('pre', 'formula');
@@ -140,8 +140,14 @@ export function renderMethodology(container: HTMLElement): void {
     limitations.appendChild(li);
   }
 
+  const back = document.createElement('button');
+  back.className = 'methodology-back';
+  back.type = 'button';
+  back.textContent = '← Back';
+  back.addEventListener('click', () => onBack?.());
   const footer = el('div', 'methodology-footer');
   footer.append(
+    back,
     paragraph(`model v${COEFFICIENTS.modelVersion}`),
     link(CHANGELOG_URL, 'Model changelog'),
     link(METHODOLOGY_URL, 'METHODOLOGY.md'),
