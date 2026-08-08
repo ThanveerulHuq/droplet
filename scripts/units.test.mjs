@@ -83,12 +83,19 @@ test('resolveUnits: extended en-US-... tags still resolve imperial', () => {
   assert.equal(resolveUnits('en-US-u-ca-gregory'), 'imperial');
 });
 
-test('auto with no navigator resolves to metric (pure path)', () => {
-  assert.equal(formatVolume(6.8, 'auto'), '6.8 mL');
+test('auto with unknown locale resolves to metric (pure path)', () => {
+  assert.equal(formatVolume(6.8, 'auto', 'xx-XX'), '6.8 mL');
 });
 
 test('autoUnits with no navigator resolves to metric', () => {
-  assert.equal(autoUnits(), 'metric');
+  // Node 21+ ships a global navigator, so simulate absence explicitly.
+  const saved = globalThis.navigator;
+  try {
+    delete globalThis.navigator;
+    assert.equal(autoUnits(), 'metric');
+  } finally {
+    globalThis.navigator = saved;
+  }
 });
 
 test('auto honors an explicit language: en-US → fl oz, fr-FR → mL', () => {
