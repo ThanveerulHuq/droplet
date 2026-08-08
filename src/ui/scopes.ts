@@ -1,7 +1,8 @@
+import type { ConversationScan } from '../adapters/types.ts';
 import type { ProviderId, Units } from '../storage/schema.ts';
 import type { Scope } from '../model/aggregate.ts';
 import type { ScopeView } from '../model/popup.ts';
-import { buildScopeView } from '../model/popup.ts';
+import { buildScanView, buildScopeView } from '../model/popup.ts';
 import { repo } from '../storage/repo.ts';
 import { COEFFICIENTS } from '../model/coefficients.ts';
 import { formatVolume } from '../lib/units.ts';
@@ -40,6 +41,19 @@ async function resolveActiveChat(): Promise<ActiveChat> {
   } catch (err) {
     log.warn('failed to resolve active conversation', err);
     return { chatKey: null, degraded: false };
+  }
+}
+
+async function requestChatScan(): Promise<ConversationScan | null> {
+  try {
+    const res = (await browser.runtime.sendMessage({ type: 'GET_CHAT_SCAN' })) as
+      | { scan?: ConversationScan | null }
+      | null
+      | undefined;
+    return res?.scan ?? null;
+  } catch (err) {
+    log.warn('failed to scan current chat', err);
+    return null;
   }
 }
 
@@ -188,7 +202,14 @@ export function mountScopes(container: HTMLElement): { refresh: () => Promise<vo
       state.units = store.settings.units;
       state.chatKey = chat.chatKey;
       state.degraded = chat.degraded;
-      const view = buildScopeView(store, store.settings, state.scope, state.chatKey);
+      let view: ScopeView | null;
+      if (state.scope === 'chat') {
+        const scan = await requestChatScan();
+        if (seq !== renderSeq) return;
+        view = scan ? buildScanView(scan, store.settings) : null;
+      } else {
+        view = buildScopeView(store, store.settings, state.scope, state.chatKey);
+      }
       renderScopes(container, view, state, setScope);
     } catch (err) {
       if (seq !== renderSeq) return;
