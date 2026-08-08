@@ -4,7 +4,6 @@ import type { Scope } from '../model/aggregate.ts';
 import type { ScopeView } from '../model/popup.ts';
 import { buildScanView, buildScopeView } from '../model/popup.ts';
 import { repo } from '../storage/repo.ts';
-import { COEFFICIENTS } from '../model/coefficients.ts';
 import { formatVolume } from '../lib/units.ts';
 import { log } from '../lib/log.ts';
 
@@ -112,6 +111,9 @@ function pausedState(): HTMLElement {
 }
 
 function appendView(body: HTMLElement, view: ScopeView, state: ScopesState): void {
+  const reading = el('section', 'estimate-reading');
+  body.appendChild(reading);
+
   const headline = el('p', 'headline');
   headline.textContent = view.primary.label;
 
@@ -129,23 +131,14 @@ function appendView(body: HTMLElement, view: ScopeView, state: ScopesState): voi
     meta.textContent = providers;
   }
 
-  body.append(headline, subtitle, meta);
-
-  if (view.secondary) {
-    const secondary = el('p', 'secondary');
-    secondary.textContent = `that's ${view.secondary.label}`;
-    body.appendChild(secondary);
-  }
+  reading.append(headline, subtitle, meta);
 
   if (view.estimatedRatio > 0.1) {
     const estimated = el('p', 'estimated');
     estimated.textContent = '>10% of responses were estimated';
-    body.appendChild(estimated);
+    reading.appendChild(estimated);
   }
 
-  const model = el('footer', 'model-version');
-  model.textContent = `model v${COEFFICIENTS.modelVersion}`;
-  body.appendChild(model);
 }
 
 /**
