@@ -159,40 +159,6 @@ button:disabled {
   border-color: #d1d1d6;
 }
 
-/* --- View tabs (Task 24: scopes / methodology / settings) --- */
-
-.view-tabs {
-  display: flex;
-  gap: 2px;
-  margin: 0 0 16px;
-  padding: 2px;
-  border-radius: 8px;
-  background: #f2f2f7;
-}
-
-.view-tab {
-  flex: 1;
-  padding: 6px 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  font-size: 12px;
-  color: #48484a;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.view-tab:hover {
-  background: #e5e5ea;
-}
-
-.view-tab.active {
-  background: #fff;
-  color: #1c1c1e;
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
-}
-
 /* --- Methodology panel (Task 24) --- */
 
 .methodology-h2 {
@@ -272,47 +238,25 @@ button:disabled {
   text-decoration: none;
 }
 
-/* --- Settings view (Task 25) --- */
+/* --- Footer actions (simplify popup design) --- */
 
-.setting-row {
+.footer-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f2f2f7;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-.setting-label {
-  font-size: 13px;
-  color: #1c1c1e;
-}
-
-.setting-row select {
-  max-width: 200px;
+.footer-btn {
+  flex: 1;
   padding: 6px 8px;
-  border: 1px solid #c7c7cc;
-  border-radius: 6px;
-  background: #fff;
+  font-size: 11px;
+  color: #48484a;
+  border-color: #d1d1d6;
+}
+
+.methodology-back {
+  padding: 4px 10px;
   font-size: 12px;
-  color: #1c1c1e;
-}
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f2f2f7;
-}
-
-.toggle-label {
-  font-size: 13px;
-  color: #1c1c1e;
-}
-
-.toggle-hint {
-  margin-left: auto;
-  font-size: 12px;
-  color: #8e8e93;
+  color: #0a66c2;
+  border-color: #d1d1d6;
 }
