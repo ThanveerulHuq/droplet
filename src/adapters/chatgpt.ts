@@ -1,6 +1,6 @@
 import { sha256Hex } from '../lib/hash.ts';
 import { log } from '../lib/log.ts';
-import type { SiteAdapter } from './types.ts';
+import type { ConversationScan, SiteAdapter } from './types.ts';
 
 // Selectors were VERIFIED against the live signed-in ChatGPT DOM on 2026-08-08: every
 // selector below matched exactly the intended nodes (send button, composer, assistant
@@ -24,6 +24,18 @@ const selectors = {
 const QUIET_MS = 1200; // completion requires the assistant element unchanged this long
 const STUCK_MS = 30_000; // no completion progress for this long ⇒ completion never establishes
 const ASSISTANT_TIMEOUT_MS = 15_000; // a submit must yield a new assistant element within this
+
+export interface ScanNodeInput { length: number; hasReasoning: boolean; }
+
+/** Pure aggregation: only lengths (char counts) are inputs; only totals leave this function. */
+export function aggregateScan(nodes: ScanNodeInput[]): ConversationScan | null {
+  if (nodes.length === 0) return null;
+  return {
+    turnCount: nodes.length,
+    totalChars: nodes.reduce((sum, n) => sum + n.length, 0),
+    reasoningCount: nodes.filter((n) => n.hasReasoning).length,
+  };
+}
 
 // Pure URL helpers live at module top level with no DOM access, so this module can be
 // imported by the node test runner. `document`/`MutationObserver` are only touched at
@@ -49,6 +61,22 @@ export const chatgptAdapter: SiteAdapter = {
   },
 
   selectors,
+
+  // Privacy rule: per node only `.textContent.length` is read; only the aggregate numbers
+  // (`turnCount`, `totalChars`, `reasoningCount`) are returned. No text is buffered or stored.
+  scanConversation(): ConversationScan | null {
+    const { assistantMessage, reasoning } = selectors;
+    const reasoningSelector = reasoning.join(',');
+    const nodes = document.querySelectorAll<HTMLElement>(assistantMessage.join(','));
+    const inputs: ScanNodeInput[] = [];
+    for (const node of nodes) {
+      inputs.push({
+        length: node.textContent.length,
+        hasReasoning: node.querySelector(reasoningSelector) !== null,
+      });
+    }
+    return aggregateScan(inputs);
+  },
 
   observe(onTurn, opts): () => void {
     const { sendButton, composer, assistantMessage, stopControl, reasoning } = selectors;

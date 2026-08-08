@@ -30,6 +30,7 @@ export interface SiteAdapter {
     onTurn: (sample: TurnSample) => void,
     opts: { getConversationId: () => string | null; onDegraded?: () => void },
   ): () => void;
+  scanConversation(): ConversationScan | null;
   selectors: SelectorSet;
   adapterVersion: string;
 }
