@@ -2,7 +2,10 @@ import { repo } from '../src/storage/repo.ts';
 import { applyTurn, type TurnSample } from '../src/storage/ingest.ts';
 import { log } from '../src/lib/log.ts';
 
-type IncomingMessage = { type: 'TURN_SAMPLE'; sample: TurnSample } | { type?: string };
+type IncomingMessage =
+  | { type: 'TURN_SAMPLE'; sample: TurnSample }
+  | { type: 'GET_MOCK_COUNTS' }
+  | { type?: string };
 
 let queue: Promise<void> = Promise.resolve();
 
@@ -24,6 +27,12 @@ export default defineBackground(() => {
         })
         .then((accepted) => respond({ accepted }))
         .catch((err) => { log.warn('TURN_SAMPLE failed', err); respond({ accepted: false }); });
+      return true;
+    }
+    if (message.type === 'GET_MOCK_COUNTS') {
+      // Mock-only: the WXT_MOCK content script reads back the store to assert scripted turns.
+      // Harmless on real builds — no other sender uses this type.
+      void repo.load().then((store) => respond({ counts: store }));
       return true;
     }
   });
