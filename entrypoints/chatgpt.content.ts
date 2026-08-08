@@ -25,14 +25,19 @@ export default defineContentScript({
       currentChatKey = id ? await sha256Hex(id) : null;
       log.info(`conversation key: ${currentChatKey ?? 'none'}`);
     };
-    await refreshChatKey();
+    try {
+      await refreshChatKey();
+    } catch (err) {
+      // crypto.subtle can reject; don't let it silently kill tracking (WXT only logs in dev).
+      log.warn('failed to resolve conversation key', err);
+    }
     // Task 13: SPA nav re-resolve — patch history.pushState + popstate -> refreshChatKey + re-baseline
 
     const teardown = adapter.observe(
       (sample) => {
         // Fire-and-forget: a closed channel (tab/popup gone) must not reject unhandled.
         void browser.runtime
-          .sendMessage({ type: 'TURN_SAMPLE', sample: { ...sample, chatKey: currentChatKey } })
+          .sendMessage({ type: 'TURN_SAMPLE', sample: { ...sample, chatKey: currentChatKey ?? undefined } })
           .catch(() => {});
       },
       {
@@ -44,8 +49,11 @@ export default defineContentScript({
       },
     );
 
+    // A non-async listener returns a Promise ONLY for the matched type; an async listener
+    // would return a Promise for every message and steal other listeners' responses. A plain
+    // object return is dropped by Chrome/Firefox/polyfill runtimes, so the promise is required.
     browser.runtime.onMessage.addListener((msg: { type?: string }) => {
-      if (msg.type === 'GET_CONVERSATION_KEY') return { chatKey: currentChatKey };
+      if (msg.type === 'GET_CONVERSATION_KEY') return Promise.resolve({ chatKey: currentChatKey });
     });
   },
 });
