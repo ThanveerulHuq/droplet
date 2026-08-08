@@ -74,6 +74,7 @@ export const chatgptAdapter: SiteAdapter = {
     let quietTimer: number | null = null;
     let stuckTimer: number | null = null;
     let assistantTimer: number | null = null;
+    let emitting = false; // a completeTurn is in flight; ignore concurrent settles
 
     // Identity of the last assistant message node — NOT the count, because virtualized
     // lists recycle nodes.
@@ -82,20 +83,30 @@ export const chatgptAdapter: SiteAdapter = {
       return nodes.length > 0 ? nodes.item(nodes.length - 1) : null;
     };
 
-    // A node identity change: a different reference, OR the same reference carrying a new
-    // data-message-id (a recycled virtualized node). When either id is unknown, fall back to
-    // pure identity comparison (Task 9 hardening).
+    // Node identity: when both nodes carry a known data-message-id, the id is authoritative
+    // (same id = same turn regardless of reference); otherwise fall back to reference
+    // comparison (Task 9 hardening).
     const differs = (
       a: HTMLElement | null,
       aId: string | null,
       b: HTMLElement | null,
       bId: string | null,
     ): boolean => {
-      if (a === b) return aId !== null && bId !== null && aId !== bId;
-      return true;
+      // Compare ids FIRST when both are known: equal ids are the same turn even if the
+      // reference changed. Virtualized scrollback evicts and re-inserts the trailing node,
+      // and wholesale re-renders (theme change, message edit) swap references while keeping
+      // ids — reference-first comparison would double-count an already-emitted turn (M1:
+      // scroll back into history → count unchanged). Different ids still catch regeneration
+      // (new data-message-id) and rapid submits.
+      if (aId !== null && bId !== null) return aId !== bId;
+      // At least one id unknown/missing: fall back to reference comparison. Equal references
+      // are the same turn; different references (recycled node, regeneration) are new.
+      return a !== b;
     };
 
     // Did any record mutate inside the tracked element (streaming content into it)?
+    // `Node.contains` accepts text-node targets, so characterData streaming (React mutating
+    // an existing text node's nodeValue) still counts as touching the element.
     const mutationTouches = (el: HTMLElement, records: MutationRecord[]): boolean =>
       records.some((r) => el.contains(r.target));
 
@@ -146,9 +157,12 @@ export const chatgptAdapter: SiteAdapter = {
       if (disposed || active === null) return;
       if (stopControlActive()) {
         // No progress for STUCK_MS and the stop control never reverted: completion can never
-        // establish (R9.4). Keep the cycle alive so a slow-but-valid turn is still counted.
+        // establish (R9.4). Keep the cycle alive so a slow-but-valid turn is still counted —
+        // re-arm the stuck clock so a later manual stop (revert) still settles the turn; a
+        // frozen stream left alone must not dead-end the cycle.
         degrade();
         log.warn('completion never established; degraded');
+        scheduleStuck();
         return;
       }
       // Stop reverted; the element stayed quiet (and possibly empty) this whole time. Settle
@@ -187,22 +201,40 @@ export const chatgptAdapter: SiteAdapter = {
     };
 
     const completeTurn = async (el: HTMLElement, id: string | null): Promise<void> => {
-      // Privacy rule: `.textContent` is read exactly once, only for its `.length`; only the
-      // length survives the function call. Nothing else is read, buffered, or stored.
-      const len = el.textContent.length;
-      const charCount = len === 0 ? -1 : len;
-      const isReasoning = el.querySelector(reasoningSelector) !== null; // structural only
-      // messageId chain: data-message-id → nearest [id] (self or ancestor) → ''. The final
-      // '' turnKey disables dedupe for that turn; hashing response text is deliberately NOT
-      // used as a fallback (privacy constraint).
-      const messageId = id ?? el.closest('[id]')?.getAttribute('id') ?? '';
-      const turnKey = messageId === '' ? '' : await sha256Hex(messageId);
-      if (disposed || active !== el) return; // cycle re-baselined or torn down mid-hash
-      onTurn({ turnKey, charCount, isReasoning, provider: 'chatgpt' });
-      log.info('turn sample emitted', { charCount, isReasoning, turnKey: turnKey.slice(0, 8) });
-      lastEmitted = el;
-      lastEmittedId = id;
-      clearCycle();
+      // Guard against a concurrent settle re-entering while a hash is in flight: a mutation
+      // could re-base quiet mid-await and fire a second completeTurn for the same turn.
+      if (emitting) return;
+      emitting = true;
+      let settled = false; // guard passed; this call owns the sample
+      try {
+        // Privacy rule: `.textContent` is read exactly once, only for its `.length`; only the
+        // length survives the function call. Nothing else is read, buffered, or stored.
+        const len = el.textContent.length;
+        const charCount = len === 0 ? -1 : len;
+        const isReasoning = el.querySelector(reasoningSelector) !== null; // structural only
+        // messageId chain: data-message-id → nearest [id] (self or ancestor) → ''. The final
+        // '' turnKey disables dedupe for that turn; hashing response text is deliberately NOT
+        // used as a fallback (privacy constraint).
+        const messageId = id ?? el.closest('[id]')?.getAttribute('id') ?? '';
+        const turnKey = messageId === '' ? '' : await sha256Hex(messageId);
+        if (disposed || active !== el) return; // cycle re-baselined or torn down mid-hash
+        settled = true;
+        onTurn({ turnKey, charCount, isReasoning, provider: 'chatgpt' });
+        log.info('turn sample emitted', { charCount, isReasoning, turnKey: turnKey.slice(0, 8) });
+      } catch (error) {
+        // A throwing onTurn must not leave the cycle armed or reject unhandled.
+        log.warn('onTurn threw; completion cycle cleared', error);
+      } finally {
+        emitting = false;
+        if (settled) {
+          // Anchor the emitted element even if onTurn threw, so the idle branch never re-cycles
+          // the same element, and always clear the cycle so the next submit starts clean. If
+          // the cycle was re-baselined mid-hash (settled false), the new cycle owns the timers.
+          lastEmitted = el;
+          lastEmittedId = id;
+          clearCycle();
+        }
+      }
     };
 
     // Re-snapshot on EVERY submit — no early return (self-healing): virtualized lists
@@ -237,14 +269,18 @@ export const chatgptAdapter: SiteAdapter = {
 
     const onBodyMutation = (records: MutationRecord[]): void => {
       if (disposed) return;
-      if (!records.some((r) => r.type === 'childList')) return;
+      if (!records.some((r) => r.type === 'childList' || r.type === 'characterData')) return;
 
       const current = trailingAssistant();
       const currentId = current?.getAttribute('data-message-id') ?? null;
 
       if (current === null) {
-        // No assistant node in the DOM (chat cleared / navigation): abandon any cycle.
+        // No assistant node in the DOM (chat cleared / navigation): abandon any cycle and
+        // cancel the pending submit, so the stale 15s assistant deadline can't fire a false
+        // degrade() against the cleared chat.
         if (active !== null) clearCycle();
+        pending = false;
+        assistantTimer = clearTimer(assistantTimer);
         return;
       }
 
@@ -277,7 +313,9 @@ export const chatgptAdapter: SiteAdapter = {
     };
 
     const observer = new MutationObserver(onBodyMutation);
-    observer.observe(document.body, { childList: true, subtree: true });
+    // characterData: React often streams tokens by mutating an existing text node's
+    // nodeValue, which fires a characterData record rather than a childList one.
+    observer.observe(document.body, { childList: true, characterData: true, subtree: true });
     document.addEventListener('click', onCaptureClick, true);
     document.addEventListener('keydown', onCaptureKeydown, true);
 
