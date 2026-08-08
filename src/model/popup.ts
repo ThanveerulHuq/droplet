@@ -85,7 +85,7 @@ export function buildScopeView(store: Store, settings: Settings, scope: Scope, c
   };
 }
 
-/** Ephemeral chat-scope view built from a live DOM scan (no store writes). Returns null for an empty scan. */
+/** Ephemeral chat-scope view built from a live DOM scan (no store writes). Returns null when the scan has no turns. */
 export function buildScanView(scan: ConversationScan, settings: Settings): ScopeView | null {
   if (scan.turnCount === 0) return null;
 
@@ -104,6 +104,8 @@ export function buildScanView(scan: ConversationScan, settings: Settings): Scope
     band,
     primary,
     secondary,
+    // TODO: when a second provider is added, carry the provider through ConversationScan
+    // instead of hardcoding chatgpt here.
     provider: ['chatgpt'],
     estimatedRatio: estimatedRatio(counters),
     volumeLabel: formatVolume(band.mid, settings.units),
