@@ -80,6 +80,41 @@ water_total   = water_onsite + water_grid</pre>
       </section>
 
       <section>
+        <h2>Research anchors</h2>
+        <p>
+          Our low estimate follows Google’s production measurements of on-site cooling water.
+          Our high estimate follows Li et al., which adds the water consumed generating the
+          electricity. The truth for any given prompt sits somewhere between, and depends on
+          which data center served you—something neither we nor you can know.
+        </p>
+        <ol>
+          <li>
+            <p>
+              Elsworth, C., Huang, K., Patterson, D., Schneider, I., Sedivy, R., Goodman, S.,
+              Townsend, B., Ranganathan, P., Dean, J., Vahdat, A., Gomes, B., &amp; Manyika, J.
+              (2025). <em>Measuring the environmental impact of delivering AI at Google Scale.</em>
+              arXiv:2508.15734.
+            </p>
+            <p>
+              <a href="https://arxiv.org/abs/2508.15734">arXiv abstract</a> ·
+              <a href="https://services.google.com/fh/files/misc/measuring_the_environmental_impact_of_delivering_ai_at_google_scale.pdf">Google PDF</a>
+            </p>
+          </li>
+          <li>
+            <p>
+              Li, P., Yang, J., Islam, M. A., &amp; Ren, S. (2025). <em>Making AI Less “Thirsty”:
+              Uncovering and Addressing the Secret Water Footprint of AI Models.</em>
+              <em>Communications of the ACM</em>, 68(7), 54–63.
+            </p>
+            <p>
+              <a href="https://cacm.acm.org/sustainability-and-computing/making-ai-less-thirsty/">Communications of the ACM (peer-reviewed version)</a> ·
+              <a href="https://arxiv.org/abs/2304.03271">arXiv preprint</a>
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section>
         <h2>Known limitations</h2>
         <ul>
           <li>Reasoning tokens are not visible, so Droplet applies a multiplier only when reasoning UI is detected.</li>

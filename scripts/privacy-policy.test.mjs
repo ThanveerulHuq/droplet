@@ -27,4 +27,8 @@ test('privacy policy links to the colocated methodology page', () => {
 
   assert.match(policy, /href="methodology\.html"/);
   assert.match(methodology, /How the estimate is calculated/);
+  assert.match(methodology, /https:\/\/arxiv\.org\/abs\/2508\.15734/);
+  assert.match(methodology, /https:\/\/cacm\.acm\.org\/sustainability-and-computing\/making-ai-less-thirsty\//);
+  assert.match(methodology, /https:\/\/arxiv\.org\/abs\/2304\.03271/);
+  assert.match(methodology, /depends on\s+which data center served you/i);
 });
