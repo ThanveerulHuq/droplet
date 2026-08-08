@@ -1,4 +1,5 @@
-import { resolveAdapter } from '../src/adapters/registry.ts';
+import { chatgptAdapter } from '../src/adapters/chatgpt.ts';
+import { registerAdapter, resolveAdapter } from '../src/adapters/registry.ts';
 import { sha256Hex } from '../src/lib/hash.ts';
 import { log } from '../src/lib/log.ts';
 
@@ -38,6 +39,10 @@ export default defineContentScript({
   async main() {
     await whenDocumentLoaded();
 
+    // The real chatgpt adapter must be registered before resolveAdapter can find it. The
+    // mock harness registers a localhost-only wrapper (mock.content.ts), but on the live
+    // site this is the registration site. registerAdapter replaces by id, so re-runs are safe.
+    registerAdapter(chatgptAdapter);
     const adapter = resolveAdapter(new URL(location.href));
     if (!adapter) return;
     log.info(`adapter ${adapter.id} v${adapter.adapterVersion} attached`);
@@ -58,10 +63,17 @@ export default defineContentScript({
 
     const teardown = adapter.observe(
       (sample) => {
-        // Fire-and-forget: a closed channel (tab/popup gone) must not reject unhandled.
-        void browser.runtime
-          .sendMessage({ type: 'TURN_SAMPLE', sample: { ...sample, chatKey: currentChatKey ?? undefined } })
-          .catch(() => {});
+        // Fire-and-forget: a closed channel (tab/popup gone) must not reject unhandled. Chrome
+        // throws "Extension context invalidated" SYNCHRONOUSLY when the extension was reloaded
+        // while this tab was open — a sync throw bypasses promise .catch(), so guard it here.
+        // (The sample is lost; the only recovery is reloading the chatgpt tab.)
+        try {
+          void browser.runtime
+            .sendMessage({ type: 'TURN_SAMPLE', sample: { ...sample, chatKey: currentChatKey ?? undefined } })
+            .catch(() => {});
+        } catch (error) {
+          log.warn('turn sample dropped — extension context invalidated (reload the chatgpt tab)', error);
+        }
       },
       {
         // types.ts promises getConversationId returns the raw conversation id, but here we hand

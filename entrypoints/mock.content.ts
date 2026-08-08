@@ -57,9 +57,13 @@ export default defineContentScript({
 
     const teardown = adapter.observe(
       (sample) => {
-        void browser.runtime
-          .sendMessage({ type: 'TURN_SAMPLE', sample: { ...sample, chatKey: mockKey } })
-          .catch(() => {});
+        try {
+          void browser.runtime
+            .sendMessage({ type: 'TURN_SAMPLE', sample: { ...sample, chatKey: mockKey } })
+            .catch(() => {});
+        } catch (error) {
+          log.warn('turn sample dropped — extension context invalidated (reload the mock tab)', error);
+        }
       },
       { getConversationId: () => mockKey },
     );
