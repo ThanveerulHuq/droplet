@@ -174,7 +174,7 @@ export function renderScopes(
   appendView(body, view, state);
 }
 
-export function mountScopes(container: HTMLElement): void {
+export function mountScopes(container: HTMLElement): { refresh: () => Promise<void> } {
   const state: ScopesState = { scope: 'today', chatKey: null, degraded: false, paused: false, units: 'auto' };
 
   let renderSeq = 0;
@@ -204,4 +204,6 @@ export function mountScopes(container: HTMLElement): void {
   }
 
   void refresh();
+
+  return { refresh };
 }

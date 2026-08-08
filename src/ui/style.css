@@ -149,3 +149,12 @@ button:disabled {
   font-size: 11px;
   color: #8e8e93;
 }
+
+.seed-demo {
+  display: block;
+  margin-top: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #8e8e93;
+  border-color: #d1d1d6;
+}
