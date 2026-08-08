@@ -1,11 +1,12 @@
 import { repo } from '../src/storage/repo.ts';
-import { applyTurn, type TurnSample } from '../src/storage/ingest.ts';
+import { applyTurn, trackingEnabled, type TurnSample } from '../src/storage/ingest.ts';
 import { log } from '../src/lib/log.ts';
 
 type IncomingMessage =
   | { type: 'TURN_SAMPLE'; sample: TurnSample }
   | { type: 'GET_MOCK_COUNTS' }
   | { type: 'GET_ACTIVE_CONVERSATION' }
+  | { type: 'GET_TRACKING' }
   | { type?: string };
 
 let queue: Promise<void> = Promise.resolve();
@@ -22,12 +23,26 @@ export default defineBackground(() => {
       queue = queue
         .then(() => repo.load())
         .then(async (store) => {
+          // Tracking paused (Task 26): drop the sample entirely — no count, no dedupe ring
+          // entry, no backfill when resumed.
+          if (!trackingEnabled(store)) return { accepted: false, paused: true };
           const { store: next, accepted } = applyTurn(store, message.sample);
           if (accepted) await repo.save(next);
-          return accepted;
+          return { accepted, paused: false };
         })
-        .then((accepted) => respond({ accepted }))
-        .catch((err) => { log.warn('TURN_SAMPLE failed', err); respond({ accepted: false }); });
+        .then((result) => respond(result))
+        .catch((err) => { log.warn('TURN_SAMPLE failed', err); respond({ accepted: false, paused: false }); });
+      return true;
+    }
+    if (message.type === 'GET_TRACKING') {
+      // Content scripts ask whether observation is worth attaching (Task 26). Cheap read.
+      void repo
+        .load()
+        .then((store) => respond({ tracking: trackingEnabled(store) }))
+        .catch((err) => {
+          log.warn('GET_TRACKING failed', err);
+          respond({ tracking: true }); // fail open: never silently undercount
+        });
       return true;
     }
     if (message.type === 'GET_MOCK_COUNTS') {

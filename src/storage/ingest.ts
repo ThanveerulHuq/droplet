@@ -12,6 +12,11 @@ export interface TurnSample {
 
 export interface IngestResult { store: Store; accepted: boolean; }
 
+/** Pure gate: settings.tracking === false drops turns at the background (Task 26). */
+export function trackingEnabled(store: Store): boolean {
+  return store.settings.tracking;
+}
+
 export function toDateKey(ms: number): string {
   const d = new Date(ms);
   const p = (n: number) => String(n).padStart(2, '0');

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyStore } from '../src/storage/schema.ts';
-import { applyTurn } from '../src/storage/ingest.ts';
+import { applyTurn, trackingEnabled } from '../src/storage/ingest.ts';
 
 const sample = (over = {}) => ({ turnKey: 'k1', charCount: 1200, isReasoning: false, provider: 'chatgpt', ...over });
 
@@ -61,4 +61,14 @@ test('a turn that was evicted from the ring is counted again', () => {
   for (let i = 0; i < 501; i++) applyTurn(store, sample({ turnKey: `k${i}`, chatKey: 'x' }), 1000 + i);
   const r = applyTurn(store, sample({ turnKey: 'k0' }), 2000); // evicted earlier
   assert.equal(r.accepted, true);
+});
+
+test('trackingEnabled is true by default', () => {
+  const store = emptyStore();
+  assert.equal(trackingEnabled(store), true);
+});
+test('trackingEnabled reflects the paused setting', () => {
+  const store = emptyStore();
+  store.settings.tracking = false;
+  assert.equal(trackingEnabled(store), false);
 });
