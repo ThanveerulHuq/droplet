@@ -17,10 +17,113 @@ body {
   font-size: 18px;
 }
 
-#status {
-  min-height: 1.4em;
+/* --- Scopes UI (Task 22/23) --- */
+
+.segmented {
+  display: flex;
+  gap: 2px;
   margin: 0 0 16px;
+  padding: 2px;
+  border-radius: 8px;
+  background: #f2f2f7;
+}
+
+.segmented-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
   color: #48484a;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.segmented-btn:hover {
+  background: #e5e5ea;
+}
+
+.segmented-btn.active {
+  background: #fff;
+  color: #1c1c1e;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
+.headline {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #48484a;
+}
+
+.meta {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: #6d6d70;
+}
+
+.secondary {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #48484a;
+}
+
+.estimated {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: #8e8e93;
+}
+
+.degraded {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #fff4e6;
+  color: #7a4a00;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.empty {
+  margin: 24px 0 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #6d6d70;
+}
+
+.paused {
+  margin: 0 0 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f2f2f7;
+}
+
+.paused p {
+  margin: 0;
+}
+
+.paused .paused-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.paused-note {
+  font-size: 12px;
+  color: #48484a;
+}
+
+.model-version {
+  margin-top: 16px;
+  font-size: 11px;
+  color: #8e8e93;
 }
 
 button {

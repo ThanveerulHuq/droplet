@@ -51,7 +51,7 @@ export default defineConfig({
     name: 'Droplet: water used by your AI chats',
     description: 'Estimate the water used by your AI chat usage. No data collected, no network calls.',
     version_name: buildIdentifier(),
-    permissions: ['storage'],
+    permissions: ['storage', 'tabs'],
     host_permissions: ['https://chatgpt.com/*'],
     action: {
       default_popup: 'popup.html',

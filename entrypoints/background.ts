@@ -5,6 +5,7 @@ import { log } from '../src/lib/log.ts';
 type IncomingMessage =
   | { type: 'TURN_SAMPLE'; sample: TurnSample }
   | { type: 'GET_MOCK_COUNTS' }
+  | { type: 'GET_ACTIVE_CONVERSATION' }
   | { type?: string };
 
 let queue: Promise<void> = Promise.resolve();
@@ -39,6 +40,30 @@ export default defineBackground(() => {
           log.warn('GET_MOCK_COUNTS failed', err);
           respond({ counts: null });
         });
+      return true;
+    }
+    if (message.type === 'GET_ACTIVE_CONVERSATION') {
+      // Popup scopes: the 'chat' scope needs the active tab's conversation key. The tab's
+      // content script answers GET_CONVERSATION_KEY; the degraded flag is filled in by a later
+      // task (the content script currently replies `{ chatKey }` only, so default it to false).
+      void (async () => {
+        try {
+          const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+          if (!tab?.id) { respond({ chatKey: null, degraded: false }); return; }
+          try {
+            const res = (await browser.tabs.sendMessage(tab.id, { type: 'GET_CONVERSATION_KEY' })) as
+              | { chatKey?: string | null }
+              | null
+              | undefined;
+            respond({ chatKey: res?.chatKey ?? null, degraded: false });
+          } catch {
+            respond({ chatKey: null, degraded: false }); // tab not running a content script
+          }
+        } catch (err) {
+          log.warn('GET_ACTIVE_CONVERSATION failed', err);
+          respond({ chatKey: null, degraded: false });
+        }
+      })();
       return true;
     }
   });
