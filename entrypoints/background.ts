@@ -32,7 +32,13 @@ export default defineBackground(() => {
     if (message.type === 'GET_MOCK_COUNTS') {
       // Mock-only: the WXT_MOCK content script reads back the store to assert scripted turns.
       // Harmless on real builds — no other sender uses this type.
-      void repo.load().then((store) => respond({ counts: store }));
+      void repo
+        .load()
+        .then((store) => respond({ counts: store }))
+        .catch((err) => {
+          log.warn('GET_MOCK_COUNTS failed', err);
+          respond({ counts: null });
+        });
       return true;
     }
   });

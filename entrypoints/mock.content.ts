@@ -1,3 +1,15 @@
+// Dev-only mock harness, built only under WXT_MOCK=1. Registers the real chatgpt adapter
+// against the localhost replica served by scripts/mock-server.mjs and drives it from the
+// DevTools console via window.__dropletMock:
+//
+//   submitTurn(length, { reasoning })  script one assistant turn
+//   reset()                            wipe the mock chat DOM (turn numbering keeps counting)
+//   getCounts()                        read back the background store under the mock chat key
+//
+// Contract: one turn produces exactly ONE TURN_SAMPLE settling ~1.2s after streaming ends
+// (charCount includes any reasoning text length; an empty turn still settles with charCount
+// -1 via the stuck timer — see submitTurn). Port 5199 is hardcoded in BOTH
+// scripts/mock-server.mjs and the matches[] below — intentional, keep the pair in sync.
 import { chatgptAdapter } from '../src/adapters/chatgpt.ts';
 import { registerAdapter, resolveAdapter } from '../src/adapters/registry.ts';
 import { sha256Hex } from '../src/lib/hash.ts';
@@ -12,6 +24,11 @@ async function whenDocumentLoaded(): Promise<void> {
     await new Promise<void>((r) => document.addEventListener('DOMContentLoaded', () => r(), { once: true }));
   }
 }
+
+// Turns are numbered monotonically across reset() calls: reset() clears the DOM but never
+// rewinds the counter, so a re-submitted turn still gets a fresh data-message-id. Rewinding
+// would re-hash the same turnKey, which applyTurn silently rejects as a duplicate dedupe.
+let turnCount = 0;
 
 interface MockApi {
   submitTurn(length: number, opts?: { reasoning?: boolean }): void;
@@ -47,13 +64,18 @@ export default defineContentScript({
       { getConversationId: () => mockKey },
     );
 
+    // Fidelity limits of the harness (documented, not fixed): the mock DOM only exercises a
+    // slice of the adapter's real paths —
+    //  - submits go through the send-button CLICK; the keydown-Enter composer path is never hit
+    //  - nodes are never recycled and every assistant node carries a data-message-id, so the
+    //    reference-compare branch of `differs` (the id-less fallback) is dead in the harness
+    //  - alternate selectors (data-mobile-composer-prompt, button[data-composer-submit],
+    //    aria-label="Stop generating") never match
     const chatlog = document.getElementById('chatlog');
     const composer = document.querySelector<HTMLTextAreaElement>('#prompt-textarea');
     const sendButton = document.querySelector<HTMLButtonElement>('[data-testid="send-button"]');
     const stopButton = (): HTMLButtonElement | null =>
       document.querySelector<HTMLButtonElement>('[data-testid="stop-button"]');
-
-    let turnCount = 0;
 
     // One turn must produce exactly ONE TURN_SAMPLE ~1.2s after streaming ends: the send-button
     // click arms the adapter (capture-phase submit), the new assistant element starts the
@@ -97,6 +119,11 @@ export default defineContentScript({
       // Stream: mutate the text node's data every 100ms for ~300–800ms so the 1200ms quiet
       // window is re-baselined on every characterData mutation (R9.1). Once the text is fully
       // streamed, revert the stop control; completion settles ~1200ms after the last mutation.
+      // submitTurn(0) streams no text, with two observable behaviors (no code change):
+      //  - plain: the empty element never settles on the quiet window (each pass re-arms it),
+      //    so completion only establishes on the 30s stuck timer, emitting charCount -1.
+      //  - with { reasoning }: the reasoning div's text is counted, so the turn settles at the
+      //    usual ~1.2s quiet window with charCount = reasoning text length.
       if (text.length === 0) {
         window.setTimeout(() => stop.remove(), 100);
         return;
@@ -122,7 +149,6 @@ export default defineContentScript({
       while (chatlog.firstChild) chatlog.removeChild(chatlog.firstChild);
       stopButton()?.remove();
       if (composer) composer.value = '';
-      turnCount = 0;
       log.info('mock chat reset');
     };
 
@@ -174,11 +200,18 @@ export default defineContentScript({
       const data = event.data as { __dropletMock?: { id: number; method: string; args: unknown[] } } | null;
       const req = data && typeof data === 'object' ? data.__dropletMock : undefined;
       if (!req) return;
+      // Always reply — success, not-found, or failure — so the page-side bridge's pending Map
+      // never leaks an unresolved entry that would hang the caller's promise forever.
+      const reply = (value: unknown): void =>
+        window.postMessage({ __dropletMockReply: { id: req.id, value } }, '*');
       const fn = (api as unknown as Record<string, (...a: unknown[]) => unknown>)[req.method];
-      if (typeof fn !== 'function') return;
+      if (typeof fn !== 'function') {
+        reply({ error: `unknown mock method: ${req.method}` });
+        return;
+      }
       void Promise.resolve(fn(...req.args))
-        .then((value) => window.postMessage({ __dropletMockReply: { id: req.id, value } }, '*'))
-        .catch(() => {});
+        .then(reply)
+        .catch((err: unknown) => reply({ error: String(err) }));
     });
 
     void teardown;

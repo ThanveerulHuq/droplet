@@ -17,7 +17,15 @@ const MIME = {
 };
 
 createServer(async (req, res) => {
-  const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
+  let pathname;
+  try {
+    pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
+  } catch {
+    // Malformed percent-encoding (e.g. /%zz) throws URIError — answer 400 instead of
+    // letting the async handler reject and crash the process.
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Bad Request');
+    return;
+  }
   const rel = pathname === '/' ? 'chatgpt.html' : pathname;
   const filePath = normalize(join(ROOT, rel));
   if (filePath !== ROOT && !filePath.startsWith(ROOT + sep)) {
