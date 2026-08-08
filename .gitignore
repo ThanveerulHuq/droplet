@@ -3,3 +3,5 @@ node_modules/
 .wxt/
 .chrome/
 .DS_Store
+.agents/
+skills-lock.json

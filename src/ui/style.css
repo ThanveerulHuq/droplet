@@ -167,15 +167,6 @@ button:disabled {
   text-decoration: underline;
 }
 
-.seed-demo {
-  display: block;
-  margin-top: 12px;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: #8e8e93;
-  border-color: #d1d1d6;
-}
-
 /* --- Methodology panel (Task 24) --- */
 
 .methodology-h2 {

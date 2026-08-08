@@ -2,7 +2,6 @@ import { log } from '../lib/log.ts';
 import { mountScopes } from './scopes.ts';
 import { renderMethodology } from './methodology.ts';
 import { repo } from '../storage/repo.ts';
-import { seedDemoStore } from '../storage/seed.ts';
 
 let bound = false;
 
@@ -12,7 +11,6 @@ export function renderApp(): void {
   const methodology = document.getElementById('methodology');
   const trackingSwitch = document.getElementById('trackingSwitch');
   const methodologyLink = document.getElementById('methodologyLink');
-  const seedBtn = document.getElementById('seedDemoBtn');
 
   if (
     !buildInfo ||
@@ -64,31 +62,6 @@ export function renderApp(): void {
       await syncTracking();
     } finally {
       trackingSwitch.disabled = false;
-    }
-  });
-
-  // QA affordance (plan M2 exit): seed a demo store so all four scopes render figures.
-  const seed = seedBtn instanceof HTMLButtonElement ? seedBtn : null;
-  seed?.addEventListener('click', async () => {
-    seed.disabled = true;
-    try {
-      let chatKey: string | null = null;
-      try {
-        const res = (await browser.runtime.sendMessage({ type: 'GET_ACTIVE_CONVERSATION' })) as
-          | { chatKey?: string | null }
-          | null
-          | undefined;
-        chatKey = res?.chatKey ?? null;
-      } catch {
-        // no active tab / content script — seed the day scopes only
-      }
-      const store = seedDemoStore(Date.now(), chatKey);
-      await repo.save(store);
-      await scopesApi.refresh();
-    } catch (err) {
-      log.warn('seed demo data failed', err);
-    } finally {
-      seed.disabled = false;
     }
   });
 
