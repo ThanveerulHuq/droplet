@@ -1,16 +1,23 @@
 import { log } from '../lib/log.ts';
 import { mountScopes } from './scopes.ts';
+import { renderMethodology } from './methodology.ts';
 import { repo } from '../storage/repo.ts';
 import { seedDemoStore } from '../storage/seed.ts';
+
+type View = 'scopes' | 'methodology' | 'settings';
+
+const VIEW_SECTIONS: ReadonlyArray<View> = ['scopes', 'methodology', 'settings'];
 
 let bound = false;
 
 export function renderApp(): void {
   const buildInfo = document.getElementById('buildInfo');
   const scopes = document.getElementById('scopes');
+  const methodology = document.getElementById('methodology');
   const seedBtn = document.getElementById('seedDemoBtn');
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.view-tab'));
 
-  if (!buildInfo || !(scopes instanceof HTMLElement)) {
+  if (!buildInfo || !(scopes instanceof HTMLElement) || !(methodology instanceof HTMLElement)) {
     log.warn('popup shell missing required elements');
     return;
   }
@@ -21,6 +28,25 @@ export function renderApp(): void {
   bound = true;
 
   const scopesApi = mountScopes(scopes);
+  renderMethodology(methodology);
+
+  // Static methodology panel renders once at mount; settings re-renders on save (Task 25).
+  const show = (view: View): void => {
+    for (const section of VIEW_SECTIONS) {
+      const node = document.getElementById(section);
+      if (node) node.hidden = section !== view;
+    }
+    for (const tab of tabs) {
+      tab.setAttribute('aria-selected', String(tab.dataset.view === view));
+      tab.classList.toggle('active', tab.dataset.view === view);
+    }
+  };
+  for (const tab of tabs) {
+    const view = tab.dataset.view as View | undefined;
+    if (!view || !VIEW_SECTIONS.includes(view)) continue;
+    tab.addEventListener('click', () => show(view));
+  }
+  show('scopes');
 
   // QA affordance (plan M2 exit): seed a demo store so all four scopes render figures.
   // The active chat key is resolved so "This chat" also shows data.

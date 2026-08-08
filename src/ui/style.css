@@ -158,3 +158,116 @@ button:disabled {
   color: #8e8e93;
   border-color: #d1d1d6;
 }
+
+/* --- View tabs (Task 24: scopes / methodology / settings) --- */
+
+.view-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 16px;
+  padding: 2px;
+  border-radius: 8px;
+  background: #f2f2f7;
+}
+
+.view-tab {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  color: #48484a;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.view-tab:hover {
+  background: #e5e5ea;
+}
+
+.view-tab.active {
+  background: #fff;
+  color: #1c1c1e;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
+/* --- Methodology panel (Task 24) --- */
+
+.methodology-h2 {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.formula {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f2f2f7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.coefficient-table {
+  width: 100%;
+  margin: 0 0 8px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.coefficient-table th,
+.coefficient-table td {
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.coefficient-table thead th {
+  border-bottom: 1px solid #d1d1d6;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.coefficient-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.coefficient-table .coefficient-source td {
+  padding-top: 0;
+  padding-bottom: 8px;
+  font-size: 11px;
+  color: #8e8e93;
+  line-height: 1.4;
+}
+
+.coefficient-source a {
+  color: #0a66c2;
+  text-decoration: none;
+}
+
+.limitations {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #48484a;
+}
+
+.methodology-footer {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 11px;
+  color: #8e8e93;
+}
+
+.methodology-footer a {
+  color: #0a66c2;
+  text-decoration: none;
+}
