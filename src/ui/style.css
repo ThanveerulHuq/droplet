@@ -144,10 +144,27 @@ button:disabled {
   cursor: default;
 }
 
-#buildInfo {
+#app footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: 16px;
+}
+
+#buildInfo {
   font-size: 11px;
   color: #8e8e93;
+}
+
+#methodologyLink {
+  font-size: 11px;
+  color: #0a66c2;
+  text-decoration: none;
+}
+
+#methodologyLink:hover {
+  text-decoration: underline;
 }
 
 .seed-demo {
@@ -238,20 +255,72 @@ button:disabled {
   text-decoration: none;
 }
 
-/* --- Footer actions (simplify popup design) --- */
+/* --- Tracking switch --- */
 
-.footer-actions {
+.tracking-row {
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 16px;
+  cursor: pointer;
 }
 
-.footer-btn {
-  flex: 1;
-  padding: 6px 8px;
-  font-size: 11px;
+.tracking-label {
+  font-size: 13px;
   color: #48484a;
-  border-color: #d1d1d6;
+}
+
+.tracking-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 24px;
+}
+
+.tracking-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.tracking-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: #c7c7cc;
+  transition: background 0.2s ease;
+}
+
+.tracking-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+  transition: transform 0.2s ease;
+}
+
+.tracking-switch input:checked + .tracking-track {
+  background: #34c759;
+}
+
+.tracking-switch input:checked + .tracking-track::after {
+  transform: translateX(16px);
+}
+
+.tracking-switch input:focus-visible + .tracking-track {
+  outline: 2px solid #0a66c2;
+  outline-offset: 2px;
+}
+
+.tracking-switch input:disabled + .tracking-track {
+  opacity: 0.5;
 }
 
 .methodology-back {

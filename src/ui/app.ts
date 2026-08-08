@@ -10,11 +10,16 @@ export function renderApp(): void {
   const buildInfo = document.getElementById('buildInfo');
   const scopes = document.getElementById('scopes');
   const methodology = document.getElementById('methodology');
-  const methodologyBtn = document.getElementById('methodologyBtn');
-  const trackingBtn = document.getElementById('trackingBtn');
+  const trackingSwitch = document.getElementById('trackingSwitch');
+  const methodologyLink = document.getElementById('methodologyLink');
   const seedBtn = document.getElementById('seedDemoBtn');
 
-  if (!buildInfo || !(scopes instanceof HTMLElement) || !(methodology instanceof HTMLElement)) {
+  if (
+    !buildInfo ||
+    !(scopes instanceof HTMLElement) ||
+    !(methodology instanceof HTMLElement) ||
+    !(trackingSwitch instanceof HTMLInputElement)
+  ) {
     log.warn('popup shell missing required elements');
     return;
   }
@@ -33,30 +38,32 @@ export function renderApp(): void {
     methodology.hidden = view !== 'methodology';
   };
 
-  methodologyBtn?.addEventListener('click', () => show('methodology'));
+  methodologyLink?.addEventListener('click', (event) => {
+    event.preventDefault();
+    show('methodology');
+  });
 
-  // Footer tracking pause (Task 26 gate): flip store.settings.tracking, re-render scopes so the
-  // existing paused banner reflects the state. Button label mirrors the current state.
+  // Tracking switch (Task 26 gate): flip store.settings.tracking, re-render scopes so the
+  // existing paused banner reflects the state. The switch mirrors the current tracking state.
   const syncTracking = async (): Promise<void> => {
-    if (!(trackingBtn instanceof HTMLButtonElement)) return;
     try {
       const settings = await repo.getSettings();
-      trackingBtn.textContent = settings.tracking ? 'Pause tracking' : 'Resume tracking';
+      trackingSwitch.checked = settings.tracking;
     } catch (err) {
       log.warn('failed to read tracking state', err);
     }
   };
-  trackingBtn?.addEventListener('click', async () => {
-    if (!(trackingBtn instanceof HTMLButtonElement)) return;
-    trackingBtn.disabled = true;
+  trackingSwitch.addEventListener('change', async () => {
+    trackingSwitch.disabled = true;
     try {
       const settings = await repo.getSettings();
-      await repo.saveSettings({ ...settings, tracking: !settings.tracking });
+      await repo.saveSettings({ ...settings, tracking: trackingSwitch.checked });
       await Promise.all([scopesApi.refresh(), syncTracking()]);
     } catch (err) {
       log.warn('failed to toggle tracking', err);
+      await syncTracking();
     } finally {
-      trackingBtn.disabled = false;
+      trackingSwitch.disabled = false;
     }
   });
 

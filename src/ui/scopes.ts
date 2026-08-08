@@ -92,7 +92,7 @@ function pausedState(): HTMLElement {
   const title = el('p', 'paused-title');
   title.textContent = 'Tracking is paused';
   const note = el('p', 'paused-note');
-  note.textContent = 'Nothing is being counted right now. You can resume tracking below.';
+  note.textContent = 'Nothing is being counted right now. You can resume tracking above.';
   box.append(title, note);
   return box;
 }

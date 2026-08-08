@@ -11,17 +11,23 @@
         <h1>Droplet</h1>
       </header>
       <main>
+        <label class="tracking-row">
+          <span class="tracking-label">Tracking</span>
+          <span class="tracking-switch">
+            <input type="checkbox" id="trackingSwitch" role="switch" />
+            <span class="tracking-track"></span>
+          </span>
+        </label>
         <!-- Scopes UI (Task 22/23): segmented control + figures/empty states, mounted by src/ui/app.ts. -->
         <section id="scopes" aria-label="Water use"></section>
         <!-- Methodology panel (Task 24): formula, coefficients + sources, limitations (PRD §5.2).
              Opened via the footer "How this works" link; closed via its own back control. -->
         <section id="methodology" aria-label="Methodology" hidden></section>
       </main>
-      <footer id="buildInfo"></footer>
-      <div class="footer-actions">
-        <button id="trackingBtn" type="button" class="footer-btn">Pause tracking</button>
-        <button id="methodologyBtn" type="button" class="footer-btn">How this works</button>
-      </div>
+      <footer>
+        <span id="buildInfo"></span>
+        <a id="methodologyLink" href="#">How this works</a>
+      </footer>
       <button id="seedDemoBtn" type="button" class="seed-demo">Seed demo data</button>
     </div>
     <script type="module" src="./main.ts"></script>
