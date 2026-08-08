@@ -6,6 +6,7 @@ type IncomingMessage =
   | { type: 'TURN_SAMPLE'; sample: TurnSample }
   | { type: 'GET_MOCK_COUNTS' }
   | { type: 'GET_ACTIVE_CONVERSATION' }
+  | { type: 'GET_CHAT_SCAN' }
   | { type: 'GET_TRACKING' }
   | { type?: string };
 
@@ -77,6 +78,29 @@ export default defineBackground(() => {
         } catch (err) {
           log.warn('GET_ACTIVE_CONVERSATION failed', err);
           respond({ chatKey: null, degraded: false });
+        }
+      })();
+      return true;
+    }
+    if (message.type === 'GET_CHAT_SCAN') {
+      // Read-only proxy: popup asks for a live DOM scan of the active conversation. The scan
+      // result is ephemeral (never written to the store) and only carries aggregate char counts.
+      void (async () => {
+        try {
+          const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+          if (!tab?.id) { respond({ scan: null }); return; }
+          try {
+            const res = (await browser.tabs.sendMessage(tab.id, { type: 'SCAN_CONVERSATION' })) as
+              | { scan?: { turnCount: number; totalChars: number; reasoningCount: number } | null }
+              | null
+              | undefined;
+            respond({ scan: res?.scan ?? null });
+          } catch {
+            respond({ scan: null }); // tab not running a content script
+          }
+        } catch (err) {
+          log.warn('GET_CHAT_SCAN failed', err);
+          respond({ scan: null });
         }
       })();
       return true;
