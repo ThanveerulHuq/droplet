@@ -20,7 +20,10 @@ export interface SiteAdapter {
   id: ProviderId;
   matches(url: URL): boolean;
   getConversationId(url: URL): string | null;
-  observe(onTurn: (sample: TurnSample) => void, opts: { getConversationId: () => string | null }): () => void;
+  observe(
+    onTurn: (sample: TurnSample) => void,
+    opts: { getConversationId: () => string | null; onDegraded?: () => void },
+  ): () => void;
   selectors: SelectorSet;
   adapterVersion: string;
 }
