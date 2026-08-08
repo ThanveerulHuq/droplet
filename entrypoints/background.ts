@@ -1,5 +1,6 @@
 import { repo } from '../src/storage/repo.ts';
 import { applyTurn, trackingEnabled, type TurnSample } from '../src/storage/ingest.ts';
+import type { ConversationScan } from '../src/adapters/types.ts';
 import { log } from '../src/lib/log.ts';
 
 type IncomingMessage =
@@ -91,7 +92,7 @@ export default defineBackground(() => {
           if (!tab?.id) { respond({ scan: null }); return; }
           try {
             const res = (await browser.tabs.sendMessage(tab.id, { type: 'SCAN_CONVERSATION' })) as
-              | { scan?: { turnCount: number; totalChars: number; reasoningCount: number } | null }
+              | { scan?: ConversationScan | null }
               | null
               | undefined;
             respond({ scan: res?.scan ?? null });
