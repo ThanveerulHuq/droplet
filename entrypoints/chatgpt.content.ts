@@ -13,12 +13,14 @@ async function whenDocumentLoaded(): Promise<void> {
 // ChatGPT is an SPA: conversation-to-conversation navigation calls history.pushState /
 // replaceState without a reload. Re-resolve the chat key on every navigation (R9.3).
 function listenForNavigation(onNavigate: () => void): () => void {
-  // Wrap pushState/replaceState: call onNavigate BEFORE the browser applies the state change
-  // (capture-phase before hook) so the key is refreshed under the new URL.
+  // Wrap pushState/replaceState: refreshChatKey reads location.href synchronously, so the
+  // hook MUST run AFTER the state change applies — otherwise it captures the old URL and the
+  // key never updates. popstate fires after the URL changes, so it needs no ordering.
   const patch = (fn: typeof history.pushState) => {
     return function (this: History, ...args: Parameters<typeof fn>) {
+      const result = fn.apply(this, args);
       onNavigate();
-      return fn.apply(this, args);
+      return result;
     };
   };
   history.pushState = patch(history.pushState);
