@@ -45,7 +45,7 @@ test('buildScopeView: secondary is null when comparisonSet is food', () => {
   const view = buildScopeView(store, store.settings, 'today', null, NOON);
   assert.equal(view.secondary, null);
   assert.equal(view.primary.rung.name, 'almond');
-  assert.equal(view.primary.label, '≈1.4 almonds');
+  assert.equal(view.primary.label, 'one almond');
 });
 
 test('buildScopeView: secondary holds the food comparison when comparisonSet is everyday', () => {
@@ -53,7 +53,7 @@ test('buildScopeView: secondary holds the food comparison when comparisonSet is 
   const view = buildScopeView(store, store.settings, 'today', null, NOON);
   assert.ok(view.secondary);
   assert.equal(view.secondary.rung.name, 'almond');
-  assert.equal(view.secondary.label, '≈1.4 almonds');
+  assert.equal(view.secondary.label, 'one almond');
 });
 
 test('buildScopeView: provider is the chat provider for chat scope', () => {
@@ -131,7 +131,7 @@ test('buildScanView: primary label matches formatComparison for the mid band', (
   const view = buildScanView(SCAN, SCAN_SETTINGS);
   assert.ok(view);
   assert.equal(view.primary.rung.name, 'tablespoon');
-  assert.equal(view.primary.label, '≈1.5 tablespoons');
+  assert.equal(view.primary.label, '2 tablespoons');
 });
 
 test('buildScanView: secondary is null when comparisonSet is food', () => {

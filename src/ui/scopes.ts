@@ -7,11 +7,13 @@ import { repo } from '../storage/repo.ts';
 import { formatVolume } from '../lib/units.ts';
 import { log } from '../lib/log.ts';
 
-const SCOPES: ReadonlyArray<{ id: Scope; label: string }> = [
-  { id: 'chat', label: 'This chat' },
-  { id: 'today', label: 'Today' },
-  { id: 'week', label: 'Week' },
-  { id: 'month', label: 'Month' },
+type ScopeIcon = 'chat' | 'today' | 'week' | 'month';
+
+const SCOPES: ReadonlyArray<{ id: Scope; label: string; icon: ScopeIcon }> = [
+  { id: 'chat', label: 'This chat', icon: 'chat' },
+  { id: 'today', label: 'Today', icon: 'today' },
+  { id: 'week', label: 'Week', icon: 'week' },
+  { id: 'month', label: 'Month', icon: 'month' },
 ];
 
 const PROVIDER_LABELS: Record<ProviderId, string> = { chatgpt: 'ChatGPT' };
@@ -71,15 +73,39 @@ function el(tag: keyof HTMLElementTagNameMap, className?: string): HTMLElement {
   return node;
 }
 
+function scopeIcon(icon: ScopeIcon): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('scope-icon');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.5');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const paths: Record<ScopeIcon, string> = {
+    chat: 'M2.5 3.5h11v7h-6.6L4.2 13v-2.5H2.5z',
+    today: 'M8 2.3v1.4M8 12.3v1.4M2.3 8h1.4M12.3 8h1.4M4 4l1 1M11 11l1 1M12 4l-1 1M5 11l-1 1M10.2 8A2.2 2.2 0 1 1 5.8 8a2.2 2.2 0 0 1 4.4 0Z',
+    week: 'M2.5 3.5h11v10h-11zM2.5 6h11M5 2.5v2M11 2.5v2M5.3 8.5h1.2M8.7 8.5h2M5.3 11h1.2M8.7 11h2',
+    month: 'M2.5 3.5h11v10h-11zM2.5 6h11M5 2.5v2M11 2.5v2M5.3 8.5h1.2M8 8.5h1.2M10.7 8.5h.1M5.3 11h1.2M8 11h1.2M10.7 11h.1',
+  };
+  path.setAttribute('d', paths[icon]);
+  svg.appendChild(path);
+  return svg;
+}
+
 function segmentedControl(active: Scope, onSelect: (scope: Scope) => void): HTMLElement {
   const group = el('div', 'segmented');
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', 'Time scope');
-  for (const { id, label } of SCOPES) {
+  for (const { id, label, icon } of SCOPES) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'segmented-btn';
-    btn.textContent = label;
+    btn.append(scopeIcon(icon), document.createTextNode(label));
     btn.setAttribute('aria-pressed', String(id === active));
     if (id === active) btn.classList.add('active');
     btn.addEventListener('click', () => onSelect(id));
@@ -114,13 +140,33 @@ function appendView(body: HTMLElement, view: ScopeView, state: ScopesState): voi
   const reading = el('section', 'estimate-reading');
   body.appendChild(reading);
 
+  if (view.primary.rung.image) {
+    const image = document.createElement('img');
+    image.className = 'comparison-image';
+    image.src = view.primary.rung.image;
+    image.alt = '';
+    reading.classList.add('has-comparison-image');
+    reading.appendChild(image);
+  }
+
+  const comparisonLabel = view.primary.label.replace(/^≈/, '');
+  const [quantity = '', ...nameParts] = comparisonLabel.startsWith('less than one ')
+    ? ['less than one', comparisonLabel.slice('less than one '.length)]
+    : comparisonLabel.split(' ');
   const headline = el('p', 'headline');
-  headline.textContent = view.primary.label;
+  const quantityText = el('span', 'comparison-quantity');
+  quantityText.textContent = quantity;
+  headline.appendChild(quantityText);
+
+  const details = el('div', 'comparison-details');
+  const name = el('p', 'comparison-name');
+  name.textContent = nameParts.join(' ');
 
   const low = formatVolume(view.band.low, state.units);
   const high = formatVolume(view.band.high, state.units);
   const subtitle = el('p', 'subtitle');
-  subtitle.textContent = `${view.volumeLabel} (${low} – ${high})`;
+  subtitle.textContent = view.volumeLabel;
+  subtitle.title = `${low} – ${high}`;
 
   const counters = view.counters;
   const providers = view.provider.map(providerLabel).join(', ');
@@ -131,7 +177,8 @@ function appendView(body: HTMLElement, view: ScopeView, state: ScopesState): voi
     meta.textContent = providers;
   }
 
-  reading.append(headline, subtitle);
+  details.append(name, subtitle);
+  reading.append(headline, details);
 
   reading.appendChild(meta);
 }
