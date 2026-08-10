@@ -112,7 +112,7 @@ test('buildScopeView: empty day scope builds an all-zero band view', () => {
 });
 
 // scan with 42 assistant messages, 12600 total chars (3150 tokens at 4 chars/token).
-const SCAN = { turnCount: 42, totalChars: 12600, reasoningCount: 0 };
+const SCAN = { provider: 'chatgpt', turnCount: 42, totalChars: 12600, reasoningCount: 0 };
 const SCAN_SETTINGS = { ...DEFAULT_SETTINGS, units: 'metric' };
 
 test('buildScanView: known scan maps to a hand-computed mid band', () => {
@@ -141,13 +141,21 @@ test('buildScanView: secondary is null when comparisonSet is food', () => {
 });
 
 test('buildScanView: reasoningTurns propagate and estimatedRatio stays 0', () => {
-  const view = buildScanView({ turnCount: 10, totalChars: 4000, reasoningCount: 3 }, SCAN_SETTINGS);
+  const view = buildScanView({ provider: 'claude', turnCount: 10, totalChars: 4000, reasoningCount: 3 }, SCAN_SETTINGS);
   assert.ok(view);
   assert.equal(view.counters.reasoningTurns, 3);
   assert.equal(view.counters.estimatedTurns, 0);
   assert.equal(view.estimatedRatio, 0);
+  assert.deepEqual(view.provider, ['claude']);
 });
 
 test('buildScanView: zero-turn scan returns null', () => {
-  assert.equal(buildScanView({ turnCount: 0, totalChars: 0, reasoningCount: 0 }, SCAN_SETTINGS), null);
+  assert.equal(buildScanView({ provider: 'chatgpt', turnCount: 0, totalChars: 0, reasoningCount: 0 }, SCAN_SETTINGS), null);
+});
+
+test('buildScanView: provider reflects the scan provider (claude/gemini)', () => {
+  const vClaude = buildScanView({ provider: 'claude', turnCount: 1, totalChars: 400, reasoningCount: 0 }, SCAN_SETTINGS);
+  const vGemini = buildScanView({ provider: 'gemini', turnCount: 1, totalChars: 400, reasoningCount: 0 }, SCAN_SETTINGS);
+  assert.deepEqual(vClaude.provider, ['claude']);
+  assert.deepEqual(vGemini.provider, ['gemini']);
 });

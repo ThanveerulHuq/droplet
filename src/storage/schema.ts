@@ -1,4 +1,4 @@
-export type ProviderId = 'chatgpt';
+export type ProviderId = 'chatgpt' | 'claude' | 'gemini';
 export type AccountingMode = 'onsite' | 'total';
 export type EnergyTier = 'efficient' | 'mid' | 'legacy';
 export type WueSetting = 'best' | 'fleet' | 'industry';

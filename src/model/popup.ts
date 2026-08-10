@@ -104,9 +104,7 @@ export function buildScanView(scan: ConversationScan, settings: Settings): Scope
     band,
     primary,
     secondary,
-    // TODO: when a second provider is added, carry the provider through ConversationScan
-    // instead of hardcoding chatgpt here.
-    provider: ['chatgpt'],
+    provider: [scan.provider],
     estimatedRatio: estimatedRatio(counters),
     volumeLabel: formatVolume(band.mid, settings.units),
   };

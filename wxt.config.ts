@@ -52,7 +52,7 @@ export default defineConfig({
     description: 'Estimate the water used by your AI chat usage. No data collected, no network calls.',
     version_name: buildIdentifier(),
     permissions: ['storage', 'tabs'],
-    host_permissions: ['https://chatgpt.com/*'],
+    host_permissions: ['https://chatgpt.com/*', 'https://claude.ai/*', 'https://gemini.google.com/*'],
     action: {
       default_popup: 'popup.html',
       default_icon: { '16': 'icons/16.png', '32': 'icons/32.png', '48': 'icons/48.png', '128': 'icons/128.png' },

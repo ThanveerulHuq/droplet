@@ -28,7 +28,7 @@ const ASSISTANT_TIMEOUT_MS = 15_000; // a submit must yield a new assistant elem
 export interface ScanNodeInput { length: number; hasReasoning: boolean; }
 
 /** Pure aggregation: only lengths (char counts) are inputs; only totals leave this function. */
-export function aggregateScan(nodes: ScanNodeInput[]): ConversationScan | null {
+export function aggregateScan(nodes: ScanNodeInput[]): Omit<ConversationScan, 'provider'> | null {
   if (nodes.length === 0) return null;
   return {
     turnCount: nodes.length,
@@ -75,7 +75,8 @@ export const chatgptAdapter: SiteAdapter = {
         hasReasoning: node.querySelector(reasoningSelector) !== null,
       });
     }
-    return aggregateScan(inputs);
+    const agg = aggregateScan(inputs);
+    return agg ? { ...agg, provider: 'chatgpt' } : null;
   },
 
   observe(onTurn, opts): () => void {

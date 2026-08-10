@@ -1,4 +1,4 @@
-export type ProviderId = 'chatgpt';
+export type ProviderId = 'chatgpt' | 'claude' | 'gemini';
 
 export interface TurnSample {
   turnKey: string;
@@ -8,6 +8,7 @@ export interface TurnSample {
 }
 
 export interface ConversationScan {
+  provider: ProviderId;
   turnCount: number;
   totalChars: number;
   reasoningCount: number;
